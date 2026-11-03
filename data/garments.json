@@ -1,0 +1,185 @@
+{
+  "_note": "Catalog. The first two items are real product photos with SAMPLE size charts (estimated, not the shop's real chart); the 'SAMPLE ...' items have no photo and are drawn as plain coloured shells. All sizes in cm. chest/waist/hem are FULL circumferences (if a shop gives flat/half-chest, multiply by 2). shoulder = seam to seam. sleeve = shoulder seam to cuff. length = shoulder point to hem. stretch = fraction (0.15 = 15%). gender = which avatar it is shown for (female / male / unisex). anchors = pixel points in the cut-out photo (see README).",
+  "garments": [
+    {
+      "id": "biker-jacket-women",
+      "name": "Faux Leather Biker Jacket",
+      "category": "outerwear",
+      "type": "jacket",
+      "gender": "female",
+      "designFit": "regular",
+      "stretch": 0.02,
+      "color": "#161616",
+      "style": {
+        "closure": "zip",
+        "collar": "point",
+        "cuffs": "zip",
+        "hem": "belt",
+        "dropShoulder": false
+      },
+      "sizes": {
+        "S": { "chest": 96, "waist": 90, "shoulder": 38.5, "sleeve": 59, "length": 50, "hem": 90 },
+        "M": { "chest": 102, "waist": 96, "shoulder": 40, "sleeve": 60, "length": 51.5, "hem": 96 },
+        "L": { "chest": 108, "waist": 102, "shoulder": 41.5, "sleeve": 61, "length": 53, "hem": 102 },
+        "XL": { "chest": 114, "waist": 108, "shoulder": 43, "sleeve": 62, "length": 54.5, "hem": 108 }
+      },
+      "image": "assets/garments/biker-jacket-women.png",
+      "texture": "assets/garments/biker-jacket-women-texture.jpg",
+      "anchors": {
+        "collarL": [372, 18],
+        "collarR": [575, 18],
+        "shoulderL": [200, 168],
+        "shoulderR": [748, 165],
+        "armpitL": [255, 440],
+        "armpitR": [690, 440],
+        "hemL": [222, 862],
+        "hemR": [740, 862],
+        "cuffOuterL": [30, 930],
+        "cuffInnerL": [140, 955],
+        "cuffOuterR": [915, 925],
+        "cuffInnerR": [800, 950],
+        "backPatch": [300, 560, 380, 660]
+      }
+    },
+    {
+      "id": "leather-jacket-men",
+      "name": "Stand-Collar Leather Jacket",
+      "category": "outerwear",
+      "type": "jacket",
+      "gender": "male",
+      "designFit": "regular",
+      "stretch": 0.01,
+      "color": "#141414",
+      "style": {
+        "closure": "zip",
+        "collar": "stand",
+        "cuffs": "band",
+        "hem": "band",
+        "dropShoulder": false
+      },
+      "sizes": {
+        "S": { "chest": 104, "waist": 98, "shoulder": 43.5, "sleeve": 61.5, "length": 60, "hem": 96 },
+        "M": { "chest": 110, "waist": 104, "shoulder": 45.5, "sleeve": 63, "length": 62, "hem": 102 },
+        "L": { "chest": 116, "waist": 110, "shoulder": 47.5, "sleeve": 64.5, "length": 64, "hem": 108 },
+        "XL": { "chest": 122, "waist": 116, "shoulder": 49.5, "sleeve": 66, "length": 66, "hem": 114 }
+      },
+      "image": "assets/garments/leather-jacket-men.png",
+      "texture": "assets/garments/leather-jacket-men-texture.jpg",
+      "anchors": {
+        "collarL": [262, 20],
+        "collarR": [500, 110],
+        "shoulderL": [70, 150],
+        "shoulderR": [592, 180],
+        "armpitL": [140, 340],
+        "armpitR": [548, 340],
+        "hemL": [150, 840],
+        "hemR": [558, 838],
+        "cuffOuterL": [8, 785],
+        "cuffInnerL": [100, 825],
+        "cuffOuterR": [665, 795],
+        "cuffInnerR": [575, 812],
+        "backPatch": [215, 620, 300, 720]
+      }
+    },
+    {
+      "id": "sample-bomber",
+      "name": "SAMPLE Classic Bomber",
+      "category": "outerwear",
+      "type": "jacket",
+      "designFit": "regular",
+      "stretch": 0.02,
+      "color": "#5b6146",
+      "style": {
+        "closure": "zip",
+        "collar": "rib",
+        "cuffs": "rib",
+        "hem": "rib",
+        "dropShoulder": false
+      },
+      "sizes": {
+        "S": { "chest": 104, "waist": 98, "shoulder": 43, "sleeve": 61, "length": 58, "hem": 90 },
+        "M": { "chest": 110, "waist": 104, "shoulder": 45, "sleeve": 62.5, "length": 60, "hem": 96 },
+        "L": { "chest": 116, "waist": 110, "shoulder": 47, "sleeve": 64, "length": 62, "hem": 102 },
+        "XL": { "chest": 122, "waist": 116, "shoulder": 49, "sleeve": 65.5, "length": 64, "hem": 108 }
+      },
+      "image": null,
+      "anchors": null,
+      "gender": "unisex"
+    },
+    {
+      "id": "sample-denim",
+      "name": "SAMPLE Trucker Denim Jacket",
+      "category": "outerwear",
+      "type": "jacket",
+      "designFit": "fitted",
+      "stretch": 0.01,
+      "color": "#4a6a8f",
+      "style": {
+        "closure": "buttons",
+        "collar": "point",
+        "cuffs": "button",
+        "hem": "band",
+        "dropShoulder": false
+      },
+      "sizes": {
+        "S": { "chest": 100, "waist": 96, "shoulder": 43, "sleeve": 60.5, "length": 54, "hem": 96 },
+        "M": { "chest": 106, "waist": 102, "shoulder": 45, "sleeve": 62, "length": 56, "hem": 102 },
+        "L": { "chest": 112, "waist": 108, "shoulder": 47, "sleeve": 63.5, "length": 58, "hem": 108 },
+        "XL": { "chest": 118, "waist": 114, "shoulder": 49, "sleeve": 65, "length": 60, "hem": 114 }
+      },
+      "image": null,
+      "anchors": null,
+      "gender": "unisex"
+    },
+    {
+      "id": "sample-cardigan",
+      "name": "SAMPLE Knit Cardigan",
+      "category": "outerwear",
+      "type": "cardigan",
+      "designFit": "regular",
+      "stretch": 0.15,
+      "color": "#c8b89a",
+      "style": {
+        "closure": "buttons",
+        "collar": "v-neck",
+        "cuffs": "rib",
+        "hem": "rib",
+        "dropShoulder": false
+      },
+      "sizes": {
+        "S": { "chest": 102, "waist": 98, "shoulder": 43, "sleeve": 60, "length": 62, "hem": 94 },
+        "M": { "chest": 108, "waist": 104, "shoulder": 45, "sleeve": 61.5, "length": 64, "hem": 100 },
+        "L": { "chest": 114, "waist": 110, "shoulder": 47, "sleeve": 63, "length": 66, "hem": 106 },
+        "XL": { "chest": 120, "waist": 116, "shoulder": 49, "sleeve": 64.5, "length": 68, "hem": 112 }
+      },
+      "image": null,
+      "anchors": null,
+      "gender": "unisex"
+    },
+    {
+      "id": "sample-oversized",
+      "name": "SAMPLE Oversized Utility Jacket",
+      "category": "outerwear",
+      "type": "jacket",
+      "designFit": "oversized",
+      "stretch": 0,
+      "color": "#2f2f33",
+      "style": {
+        "closure": "zip",
+        "collar": "stand",
+        "cuffs": "plain",
+        "hem": "straight",
+        "dropShoulder": true
+      },
+      "sizes": {
+        "S": { "chest": 118, "waist": 114, "shoulder": 52, "sleeve": 56, "length": 64, "hem": 114 },
+        "M": { "chest": 124, "waist": 120, "shoulder": 54, "sleeve": 57, "length": 66, "hem": 120 },
+        "L": { "chest": 130, "waist": 126, "shoulder": 56, "sleeve": 58, "length": 68, "hem": 126 },
+        "XL": { "chest": 136, "waist": 132, "shoulder": 58, "sleeve": 59, "length": 70, "hem": 132 }
+      },
+      "image": null,
+      "anchors": null,
+      "gender": "unisex"
+    }
+  ]
+}

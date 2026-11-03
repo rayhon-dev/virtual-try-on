@@ -1,0 +1,52 @@
+{
+  "_note": "Fit rules. All values in cm. ease = garment - body. Target range = ranges[preference] + allowance. See README for the full explanation.",
+
+  "preferences": ["fitted", "regular", "relaxed", "oversized"],
+
+  "confidenceMargin": 2,
+
+  "scoring": {
+    "tightPenaltyPerCm": 12,
+    "loosePenaltyPerCm": 6,
+    "tooTightCap": 30,
+    "minGoodScore": 50
+  },
+
+  "categories": {
+    "outerwear": {
+      "_note": "Outerwear is worn over a T-shirt, so width zones get a layer 'allowance' added to every target range.",
+      "zones": {
+        "chest": {
+          "bodyKey": "chest", "garmentKey": "chest",
+          "kind": "width", "stretchable": true,
+          "allowance": 4, "tolerance": 6, "weight": 3,
+          "ranges": { "fitted": [2, 6], "regular": [6, 12], "relaxed": [12, 20], "oversized": [20, 36] }
+        },
+        "waist": {
+          "bodyKey": "waist", "garmentKey": "waist",
+          "kind": "width", "stretchable": true,
+          "allowance": 4, "tolerance": 8, "weight": 1,
+          "ranges": { "fitted": [4, 10], "regular": [10, 20], "relaxed": [20, 30], "oversized": [30, 50] }
+        },
+        "shoulder": {
+          "bodyKey": "shoulder", "garmentKey": "shoulder",
+          "kind": "width", "stretchable": false,
+          "allowance": 0, "tolerance": 3, "weight": 3, "confidenceMargin": 1,
+          "ranges": { "fitted": [0, 2], "regular": [0, 3], "relaxed": [2, 6], "oversized": [6, 14] }
+        },
+        "sleeve": {
+          "bodyKey": "armLength", "garmentKey": "sleeve",
+          "kind": "length", "stretchable": false, "dropShoulderCorrection": true,
+          "allowance": 0, "tolerance": 4, "weight": 2,
+          "ranges": { "any": [0, 5] }
+        },
+        "length": {
+          "bodyKey": "torsoLength", "garmentKey": "length",
+          "kind": "length", "stretchable": false,
+          "allowance": 0, "tolerance": 6, "weight": 1,
+          "ranges": { "any": [-6, 12] }
+        }
+      }
+    }
+  }
+}

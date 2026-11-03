@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitCheck — 3D avatar tests</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <!-- Import map: tells the browser where "three" lives (like a tiny requirements.txt with paths) -->
+  <script type="importmap">
+    { "imports": { "three": "../lib/three/three.module.js", "three/addons/": "../lib/three/addons/" } }
+  </script>
+  <style>
+    .test-page { max-width: 980px; margin: 0 auto; padding: var(--space-4); display: grid; gap: var(--space-4); }
+    .summary { font-weight: 600; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--color-surface-alt); }
+    .summary.ok   { background: #e6f4ea; color: var(--fit-good); }
+    .summary.fail { background: #fbe9e9; color: var(--fit-too-tight); }
+    table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); background: #fff; border-radius: var(--radius-md); overflow: hidden; }
+    th, td { text-align: left; padding: 8px 12px; border-bottom: 1px solid var(--color-border); font-variant-numeric: tabular-nums; }
+    .pass { color: var(--fit-good); font-weight: 600; }
+    .fail { color: var(--fit-too-tight); font-weight: 600; }
+    .views { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); }
+    .view { height: 420px; border-radius: var(--radius-md); background: linear-gradient(#efebe5, #ddd6cb); position: relative; overflow: hidden; }
+    .view canvas { width: 100%; height: 100%; display: block; }
+    .view span { position: absolute; left: 8px; bottom: 6px; font-size: 11px; color: var(--color-text-muted); }
+  </style>
+</head>
+<body>
+  <main class="test-page">
+    <h1>3D avatar tests</h1>
+    <p class="muted">Loads both avatars, reshapes them to test bodies and measures the 3D result again
+      (tape-measure circumference = convex hull of a horizontal slice). Passes if within 2 %.</p>
+    <div class="summary" id="summary">Loading avatars…</div>
+    <div class="views" id="views"></div>
+    <table id="table"><thead><tr><th>Body</th><th>Measure</th><th>Target</th><th>3D result</th><th>Diff</th><th></th></tr></thead><tbody></tbody></table>
+  </main>
+
+  <script type="module">
+    import { loadAvatar, hullPerimeter } from '../js/core/avatar3d.js';
+    import { createViewer } from '../js/core/viewer3d.js';
+    import { DEFAULT_MEASUREMENTS } from '../js/core/storage.js';
+
+    const BODIES = [
+      { label: 'Average male', gender: 'male', m: DEFAULT_MEASUREMENTS.male },
+      { label: 'Large male', gender: 'male', m: { height: 168, chest: 124, waist: 118, hip: 116, shoulder: 48, armLength: 58, torsoLength: 56 } },
+      { label: 'Average female', gender: 'female', m: DEFAULT_MEASUREMENTS.female },
+      { label: 'Tall female', gender: 'female', m: { height: 186, chest: 86, waist: 66, hip: 104, shoulder: 41, armLength: 63, torsoLength: 57 } },
+    ];
+    const tbody = document.querySelector('#table tbody');
+    const summary = document.getElementById('summary');
+    const views = document.getElementById('views');
+    let passed = 0;
+    let total = 0;
+
+    function row(label, what, target, got, tol) {
+      const diff = got - target;
+      const ok = Math.abs(diff) <= Math.abs(target) * tol;
+      total++; if (ok) passed++;
+      tbody.insertAdjacentHTML('beforeend', `<tr><td>${label}</td><td>${what}</td><td>${target.toFixed(1)} cm</td>
+        <td>${got.toFixed(1)} cm</td><td>${diff >= 0 ? '+' : ''}${diff.toFixed(1)}</td><td class="${ok ? 'pass' : 'fail'}">${ok ? 'PASS' : 'FAIL'}</td></tr>`);
+    }
+
+    try {
+      for (const body of BODIES) {
+        const avatar = await loadAvatar(body.gender); // a fresh copy per body
+        const L = avatar.deform(body.m);
+        const per = (y) => hullPerimeter(L.slice(y)) * 100;
+        row(body.label, 'Height', body.m.height, (L.top - L.floor) * 100, 0.02);
+        row(body.label, 'Chest', body.m.chest, per(L.chestY), 0.02);
+        row(body.label, 'Waist', body.m.waist, per(L.waistY), 0.02);
+        row(body.label, 'Hip', body.m.hip, per(L.hipY), 0.02);
+
+        const box = document.createElement('div');
+        box.className = 'view';
+        box.innerHTML = `<span>${body.label}</span>`;
+        views.appendChild(box);
+        createViewer(box).setAvatar(avatar);
+        // Keep the base numbers visible for debugging
+        console.log(body.label, JSON.stringify({ base: { ...avatar.base, centreZ: undefined, shoulderJoint: undefined, armAxis: undefined, headPivot: undefined } }));
+      }
+      summary.textContent = `${passed} / ${total} checks passed`;
+      summary.className = `summary ${passed === total ? 'ok' : 'fail'}`;
+    } catch (err) {
+      summary.textContent = `Error: ${err.message}`;
+      summary.className = 'summary fail';
+      console.error(err);
+    }
+  </script>
+</body>
+</html>

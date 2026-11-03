@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>FitCheck — Create your avatar</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/pages.css">
+
+  <!-- Import map: tells the browser where "three" (the 3D library, saved locally in lib/) lives -->
+  <script type="importmap">
+    { "imports": { "three": "./lib/three/three.module.js", "three/addons/": "./lib/three/addons/" } }
+  </script>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="topbar">
+      <a class="logo" href="index.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m21 8-2 2-1.5-1.5 2-2z"/><path d="M15.3 3.9a9 9 0 0 1 4.8 4.8"/><path d="M7 18h10"/><path d="M7 14h10"/><path d="M7 10h10"/><path d="M7 22V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v17"/><path d="M12 2v2"/>
+        </svg>
+        FitCheck
+      </a>
+      <nav class="steps" aria-label="Steps">
+        <span class="is-active">1 · Avatar</span>
+        <a href="studio.html">2 · Studio</a>
+      </nav>
+    </header>
+
+    <!-- Studio stage with the live mannequin -->
+    <section class="stage" aria-label="Mannequin preview">
+      <div class="stage-toolbar">
+        <!-- Gender choice: two radio buttons styled as a pill switch -->
+        <fieldset class="segmented" id="gender-choice">
+          <legend class="visually-hidden">Mannequin</legend>
+          <label><input type="radio" name="gender" value="female" form="avatar-form">Female</label>
+          <label><input type="radio" name="gender" value="male" form="avatar-form">Male</label>
+        </fieldset>
+      </div>
+      <div class="stage-figure" id="preview-area" aria-live="polite"></div>
+      <div class="stage-loading" id="stage-loading" hidden><span class="spinner"></span>Loading 3D avatar…</div>
+      <p class="stage-caption" id="scale-caption"></p>
+    </section>
+
+    <!-- Measurements: bottom sheet on mobile, side panel on desktop -->
+    <aside class="sheet">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="sheet-header">
+        <h1>Your measurements</h1>
+        <p class="muted">Your avatar is shaped from these numbers. Adjust them until it matches you.</p>
+      </div>
+
+      <!-- novalidate = turn off the browser's own popups; our JS shows the errors -->
+      <form id="avatar-form" class="sheet-form" novalidate>
+        <div class="sheet-body">
+          <!-- Fields are created by js/pages/avatar.js from MEASUREMENT_FIELDS -->
+          <section class="field-group"><h2>Body</h2><div id="fields-body"></div></section>
+          <section class="field-group"><h2>Upper body</h2><div id="fields-upper"></div></section>
+          <section class="field-group"><h2>Lower body</h2><div id="fields-lower"></div></section>
+        </div>
+
+        <p class="form-error" id="form-error" role="alert" hidden></p>
+
+        <div class="sticky-footer">
+          <button type="button" class="btn btn-ghost" id="reset-btn">Reset</button>
+          <button type="submit" class="btn btn-primary">Save &amp; go to studio →</button>
+        </div>
+      </form>
+    </aside>
+  </div>
+
+  <!-- type="module" = ES module: allows import/export (like Python modules).
+       Modules only work over http://, that's why we use Live Server. -->
+  <script type="module" src="js/pages/avatar.js"></script>
+</body>
+</html>

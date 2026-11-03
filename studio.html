@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>FitCheck — Try-on studio</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;600&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/pages.css">
+
+  <script type="importmap">
+    { "imports": { "three": "./lib/three/three.module.js", "three/addons/": "./lib/three/addons/" } }
+  </script>
+</head>
+<body>
+  <div class="app-layout">
+    <header class="topbar">
+      <a class="logo" href="index.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m21 8-2 2-1.5-1.5 2-2z"/><path d="M15.3 3.9a9 9 0 0 1 4.8 4.8"/><path d="M7 18h10"/><path d="M7 14h10"/><path d="M7 10h10"/><path d="M7 22V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v17"/><path d="M12 2v2"/>
+        </svg>
+        FitCheck
+      </a>
+      <nav class="steps" aria-label="Steps">
+        <a href="index.html">1 · Avatar</a>
+        <span class="is-active">2 · Studio</span>
+      </nav>
+    </header>
+
+    <section class="stage" aria-label="Try-on stage">
+      <div class="stage-toolbar">
+        <a class="btn btn-ghost" href="index.html" aria-label="Edit avatar" title="Edit avatar">← Edit Avatar</a>
+        <div class="toolbar-group">
+          <button type="button" class="pill-toggle" id="fitmap-btn" aria-pressed="false" disabled>Fit map</button>
+          <button type="button" class="btn btn-primary" id="open-catalog-btn">Change Item</button>
+        </div>
+      </div>
+      <div class="stage-figure" id="stage-figure"></div>
+      <div class="stage-loading" id="stage-loading" hidden><span class="spinner"></span>Loading 3D avatar…</div>
+      <div class="fit-legend" id="fit-legend" hidden>
+        <span><i class="dot tight"></i> TIGHT</span>
+        <span><i class="dot good"></i> GOOD</span>
+        <span><i class="dot low"></i> EDGE</span>
+        <span><i class="dot loose"></i> LOOSE</span>
+      </div>
+      <p class="stage-caption" id="stage-caption"></p>
+    </section>
+
+    <aside class="sheet">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="sheet-body">
+        <div id="results-panel">
+          <!-- Verdict and Table rendered here -->
+        </div>
+        <div id="size-panel">
+          <!-- Size selection and Fit preference rendered here -->
+        </div>
+      </div>
+    </aside>
+
+    <!-- Catalog Drawer -->
+    <div class="catalog-drawer" id="catalog-drawer" hidden>
+      <div class="drawer-content">
+        <div class="label-row">
+          <h2 class="panel-title">Catalog</h2>
+          <button type="button" class="btn btn-ghost" id="close-catalog-btn">Close</button>
+        </div>
+        <div class="tabs" role="tablist" id="tabs">
+          <button type="button" class="tab" role="tab" data-tab="outerwear" aria-selected="true">Outerwear</button>
+          <button type="button" class="tab" role="tab" data-tab="tops" aria-selected="false">Tops<small>soon</small></button>
+          <button type="button" class="tab" role="tab" data-tab="bottoms" aria-selected="false">Bottoms<small>soon</small></button>
+        </div>
+        <div id="catalog-panel">
+          <!-- Garment cards rendered here -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script type="module" src="js/pages/studio.js"></script>
+</body>
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitCheck — 3D garment tests</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <script type="importmap">
+    { "imports": { "three": "../lib/three/three.module.js", "three/addons/": "../lib/three/addons/" } }
+  </script>
+  <style>
+    .test-page { max-width: 1200px; margin: 0 auto; padding: var(--space-4); display: grid; gap: var(--space-4); }
+    .summary { font-weight: 600; padding: var(--space-3) var(--space-4); border-radius: var(--radius-md); background: var(--color-surface-alt); }
+    .summary.ok   { background: #e6f4ea; color: var(--fit-good); }
+    .summary.fail { background: #fbe9e9; color: var(--fit-too-tight); }
+    table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); background: #fff; }
+    th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--color-border); font-variant-numeric: tabular-nums; }
+    .pass { color: var(--fit-good); font-weight: 600; }
+    .fail { color: var(--fit-too-tight); font-weight: 600; }
+    .views { display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--space-3); }
+    .view { height: 460px; border-radius: var(--radius-md); background: linear-gradient(#efebe5, #ddd6cb); position: relative; overflow: hidden; }
+    .view canvas { width: 100%; height: 100%; display: block; }
+    .view span { position: absolute; left: 8px; top: 6px; font-size: 12px; font-weight: 600; }
+  </style>
+</head>
+<body>
+  <main class="test-page">
+    <h1>3D garment tests</h1>
+    <p class="muted">Each jacket in every size on the average avatar. Checks: the 3D shell's chest
+      circumference equals the size chart (when the size is not smaller than the body), and the hem
+      sits <em>length</em> cm below the shoulder point.</p>
+    <div class="summary" id="summary">Loading…</div>
+    <div class="views" id="views"></div>
+    <table id="table"><thead><tr><th>Garment</th><th>Size</th><th>Check</th><th>Expected</th><th>3D</th><th></th></tr></thead><tbody></tbody></table>
+  </main>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { loadAvatar, hullPerimeter, tuckUnder } from '../js/core/avatar3d.js';
+    import { createViewer } from '../js/core/viewer3d.js';
+    import { buildGarment, loadGarmentTexture } from '../js/core/garmentRenderer.js';
+    import { loadGarments, loadFitRules } from '../js/core/data.js';
+    import { evaluateSize } from '../js/core/fitEngine.js';
+    import { DEFAULT_MEASUREMENTS } from '../js/core/storage.js';
+
+    const tbody = document.querySelector('#table tbody');
+    const summary = document.getElementById('summary');
+    const views = document.getElementById('views');
+    let passed = 0;
+    let total = 0;
+    const row = (g, s, what, exp, got, ok) => {
+      total++; if (ok) passed++;
+      tbody.insertAdjacentHTML('beforeend', `<tr><td>${g}</td><td>${s}</td><td>${what}</td><td>${exp}</td><td>${got}</td><td class="${ok ? 'pass' : 'fail'}">${ok ? 'PASS' : 'FAIL'}</td></tr>`);
+    };
+
+    /**
+     * Circumference of the garment shell at the ring nearest to height y (at or above it:
+     * above the chest line the shell keeps the chest ease). Sleeves are skipped.
+     */
+    function shellPerimeter(group, y) {
+      const ys = new Set();
+      group.traverse((o) => {
+        if (!o.isMesh || !o.name.startsWith('torso')) return;
+        const p = o.geometry.attributes.position.array;
+        for (let i = 1; i < p.length; i += 3) ys.add(+p[i].toFixed(4));
+      });
+      const ringY = [...ys].filter((v) => v >= y - 1e-4).sort((a, b) => a - b)[0];
+      const pts = [];
+      group.traverse((o) => {
+        if (!o.isMesh || !o.name.startsWith('torso')) return; // sleeves pass the chest height too
+        const p = o.geometry.attributes.position.array;
+        for (let i = 0; i < p.length; i += 3) if (Math.abs(p[i + 1] - ringY) < 0.0005) pts.push([p[i], p[i + 2]]);
+      });
+      return hullPerimeter(pts) * 100;
+    }
+
+    try {
+      const [garments, rules] = await Promise.all([loadGarments(), loadFitRules()]);
+      const params = new URLSearchParams(location.search);
+      const only = params.get('id');
+      const jobs = [
+        { id: 'leather-jacket-men', gender: 'male' },
+        { id: 'biker-jacket-women', gender: 'female' },
+        { id: 'sample-oversized', gender: 'male' },
+      ].filter((j) => !only || j.id === only);
+
+      for (const job of jobs) {
+        const garment = garments.find((g) => g.id === job.id);
+        const avatar = await loadAvatar(job.gender);
+        const L = avatar.deform(DEFAULT_MEASUREMENTS[job.gender]);
+        for (const size of Object.keys(garment.sizes)) {
+          const box = document.createElement('div');
+          box.className = 'view';
+          box.innerHTML = `<span>${garment.name} · ${size}</span>`;
+          views.appendChild(box);
+          const viewer = createViewer(box);
+          const texture = await loadGarmentTexture(garment, viewer.renderer);
+          const fit = evaluateSize(avatar.measurements, garment, size, 'regular', rules);
+          const group = buildGarment(avatar, garment, size, { texture, fitMap: params.has('fitmap'),
+            zoneResults: Object.fromEntries(fit.zones.map((z) => [z.zone, z])) });
+          // Each viewer needs its own avatar copy: clone the meshes with their own geometry
+          avatar.deform(avatar.measurements);
+          tuckUnder(avatar, group.userData);
+          const clone = { ...avatar, group: avatar.group.clone() };
+          clone.group.traverse((o) => { if (o.isMesh) o.geometry = o.geometry.clone(); });
+          viewer.setAvatar(clone);
+          viewer.setGarment(group);
+
+          const chestOk = fit.zones.find((z) => z.zone === 'chest');
+          const per = shellPerimeter(group, L.chestY);
+          const chart = garment.sizes[size].chest;
+          // When the size is smaller than body + 4 cm the shell hugs the body instead (expected)
+          if (chestOk.ease >= 4) row(garment.name, size, 'Chest circumference', `${chart} cm`, `${per.toFixed(1)} cm`, Math.abs(per - chart) <= chart * 0.03);
+          const hemDrop = ((L.shoulderY + 0.025) - group.userData.hemY) * 100;
+          row(garment.name, size, 'Length (shoulder → hem)', `${garment.sizes[size].length} cm`, `${hemDrop.toFixed(1)} cm`, Math.abs(hemDrop - garment.sizes[size].length) < 0.5);
+        }
+      }
+      summary.textContent = `${passed} / ${total} checks passed`;
+      summary.className = `summary ${passed === total ? 'ok' : 'fail'}`;
+    } catch (err) {
+      summary.textContent = `Error: ${err.message}`;
+      summary.className = 'summary fail';
+      console.error(err);
+    }
+  </script>
+</body>
+</html>
