@@ -12,7 +12,6 @@ standard-pose avatar. They try on catalog garments, and the app:
 **Key idea:** AI is used **once per user** (avatar) and **once per garment** (catalog preparation),
 never per try-on. Trying on and switching sizes run locally in the browser, instantly and for free.
 
-Detailed project notes (Uzbek): [`docs/loyiha-qaydlari.md`](docs/loyiha-qaydlari.md).
 
 ---
 
