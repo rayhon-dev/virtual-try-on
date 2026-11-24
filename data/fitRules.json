@@ -47,6 +47,41 @@
           "ranges": { "any": [-6, 12] }
         }
       }
+    },
+    "tops": {
+      "_note": "Tops (T-shirts, sweaters, shirts) are worn directly on the skin, so layer allowance is 0.",
+      "zones": {
+        "chest": {
+          "bodyKey": "chest", "garmentKey": "chest",
+          "kind": "width", "stretchable": true,
+          "allowance": 0, "tolerance": 5, "weight": 3,
+          "ranges": { "fitted": [0, 4], "regular": [4, 10], "relaxed": [10, 18], "oversized": [18, 32] }
+        },
+        "waist": {
+          "bodyKey": "waist", "garmentKey": "waist",
+          "kind": "width", "stretchable": true,
+          "allowance": 0, "tolerance": 8, "weight": 1,
+          "ranges": { "fitted": [0, 6], "regular": [6, 14], "relaxed": [14, 24], "oversized": [24, 40] }
+        },
+        "shoulder": {
+          "bodyKey": "shoulder", "garmentKey": "shoulder",
+          "kind": "width", "stretchable": false,
+          "allowance": 0, "tolerance": 3, "weight": 3, "confidenceMargin": 1,
+          "ranges": { "fitted": [0, 2], "regular": [0, 3], "relaxed": [2, 6], "oversized": [6, 14] }
+        },
+        "sleeve": {
+          "bodyKey": "armLength", "garmentKey": "sleeve",
+          "kind": "length", "stretchable": false, "dropShoulderCorrection": true,
+          "allowance": 0, "tolerance": 4, "weight": 2,
+          "ranges": { "any": [0, 5] }
+        },
+        "length": {
+          "bodyKey": "torsoLength", "garmentKey": "length",
+          "kind": "length", "stretchable": false,
+          "allowance": 0, "tolerance": 6, "weight": 1,
+          "ranges": { "any": [-6, 12] }
+        }
+      }
     }
   }
 }

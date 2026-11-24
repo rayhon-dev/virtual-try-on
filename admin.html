@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Wardrobe Admin · Add Garment — Atelier</title>
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/admin.css">
+</head>
+<body class="admin-layout">
+
+  <!-- Header -->
+  <header class="admin-header">
+    <h1>
+      <span>Atelier Studio</span>
+      <span class="badge">Garment Workshop</span>
+    </h1>
+    <div style="display:flex;align-items:center;gap:12px;">
+      <a href="dressing.html" class="btn btn-ghost" style="font-size:0.8125rem;">← Back to Dressing Room</a>
+    </div>
+  </header>
+
+  <!-- Main Content -->
+  <main class="admin-main">
+    <div class="admin-intro">
+      <h2 style="font-size:1.5rem;font-weight:600;margin:0 0 6px;">Add New Garment to Wardrobe</h2>
+      <p>Upload a clean garment photo, position the 2D fitting anchors, and configure the size chart in centimetres.</p>
+    </div>
+
+    <!-- CARD 1: Upload Image & Guidelines -->
+    <section class="admin-card" id="card-upload">
+      <div class="card-heading">
+        <span class="step-num">1</span>
+        <h2>Garment Photo & Background</h2>
+        <span class="sub">PNG, JPG, WebP · Min width 800px · Max 5MB</span>
+      </div>
+
+      <div class="upload-grid">
+        <!-- Upload Controls & Preview -->
+        <div style="display:flex;flex-direction:column;gap:14px;">
+          <div style="display:flex;gap:10px;align-items:center;">
+            <input type="file" id="garment-file-input" accept="image/png,image/jpeg,image/webp" style="display:none;">
+            <button type="button" class="btn btn-primary" id="select-image-btn" style="font-size:0.875rem;">Upload Garment Photo</button>
+            <span id="file-name-label" class="muted text-sm">No photo chosen yet</span>
+          </div>
+
+          <div class="checker-box" id="upload-preview-box">
+            <span id="upload-placeholder-text" class="muted text-sm">Image preview appears here</span>
+            <img id="upload-preview-img" alt="Garment preview" style="display:none;">
+          </div>
+
+          <!-- Background Removal Actions -->
+          <div id="bg-remove-section" style="display:none;flex-direction:column;gap:12px;">
+            <div style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
+              <span class="text-sm" style="color:var(--ink-soft);font-weight:600;">Photo has solid background:</span>
+              <button type="button" class="btn btn-primary" id="remove-bg-btn" style="font-size:0.8125rem;">Remove Background</button>
+            </div>
+
+            <!-- Tolerance Slider -->
+            <div style="background:var(--paper-2);padding:10px 14px;border:1px solid var(--line);border-radius:6px;display:flex;flex-direction:column;gap:6px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;">
+                <label for="tolerance-slider" class="text-sm" style="font-weight:600;">Tolerance: <span id="tolerance-val" style="font-family:var(--font-mono);color:var(--accent);">22</span></label>
+                <span class="text-xs muted">(8 = strict, 22 = default, 40 = loose)</span>
+              </div>
+              <input type="range" id="tolerance-slider" min="8" max="40" value="22" step="1" style="width:100%;cursor:pointer;">
+            </div>
+
+            <!-- Magic Eraser and Tools -->
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+              <button type="button" class="btn btn-ghost" id="magic-eraser-btn" style="border:1px solid var(--line);font-size:0.8125rem;">🪄 Magic Eraser: OFF</button>
+              <button type="button" class="btn btn-ghost" id="brush-eraser-btn" style="border:1px solid var(--line);font-size:0.8125rem;">🧽 Brush Eraser: OFF</button>
+              <button type="button" class="btn btn-ghost" id="restore-brush-btn" style="border:1px solid var(--line);font-size:0.8125rem;">🖌️ Restore Brush: OFF</button>
+              <label class="text-xs" style="display:flex;align-items:center;gap:6px;">Brush size
+                <input type="range" id="brush-size-slider" min="3" max="40" value="12" step="1" style="width:90px;cursor:pointer;">
+              </label>
+              <button type="button" class="btn btn-ghost" id="undo-eraser-btn" style="border:1px solid var(--line);font-size:0.8125rem;" disabled>Undo Eraser</button>
+              <button type="button" class="btn btn-ghost" id="reset-cleaning-btn" style="border:1px solid var(--line);font-size:0.8125rem;">Reset to Original</button>
+            </div>
+
+            <div id="magic-eraser-hint" class="notice-banner" style="display:none;margin-top:2px;font-size:0.78rem;">
+              <span>🪄 <strong>Magic Eraser active:</strong> Click on any trapped white pocket (e.g. between sleeve and body or inside belt loop) to erase it.</span>
+            </div>
+            <div id="brush-eraser-hint" class="notice-banner" style="display:none;margin-top:2px;font-size:0.78rem;">
+              <span id="brush-hint-text">🧽 <strong>Brush Eraser active:</strong> press and drag over leftovers (fingers, hair, thin strips) on the enlarged "Cleaned Canvas" below. Then click <strong>Use Cleaned Image</strong>.</span>
+            </div>
+
+            <!-- Side-by-side comparison when cleaned -->
+            <div id="clean-compare-container" style="display:none;flex-direction:column;gap:12px;">
+              <div class="clean-compare-row">
+                <div>
+                  <span class="text-xs muted" style="display:block;margin-bottom:4px;font-weight:600;">Original</span>
+                  <div class="checker-box" style="min-height:180px;max-height:240px;">
+                    <img id="compare-original-img" alt="Original photo">
+                  </div>
+                </div>
+                <div>
+                  <span class="text-xs muted" style="display:block;margin-bottom:4px;font-weight:600;">Cleaned Canvas</span>
+                  <div class="checker-box" id="cleaned-preview-wrap" style="min-height:180px;max-height:240px;position:relative;">
+                    <canvas id="cleaned-canvas" style="max-width:100%;max-height:240px;object-fit:contain;cursor:default;"></canvas>
+                  </div>
+                </div>
+              </div>
+              <div style="display:flex;gap:10px;">
+                <button type="button" class="btn btn-primary" id="accept-cleaned-btn" style="font-size:0.8125rem;">Use Cleaned Image</button>
+                <button type="button" class="btn btn-ghost" id="keep-original-btn" style="font-size:0.8125rem;">Keep Original</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Format Guidelines Box (from 3B) -->
+        <div class="guide-box">
+          <h4>Garment Image Format Guide</h4>
+          <p>For optimal virtual try-on drape and alignment, follow these criteria:</p>
+          <ul>
+            <li><strong>View:</strong> Direct FRONT view, flat-lay or ghost mannequin.</li>
+            <li><strong>Subject:</strong> Garment only (no person, model, or hanger visible).</li>
+            <li><strong>Sleeves:</strong> Hanging straight down close to body (10–15° angle, not spread wide).</li>
+            <li><strong>Symmetry:</strong> Left and right sides reasonably symmetric.</li>
+            <li><strong>Margin:</strong> Whole garment visible with a small border margin.</li>
+            <li><strong>Background:</strong> Transparent PNG (best) or uniform white/light grey.</li>
+            <li><strong>Resolution:</strong> High resolution (min 800px, ideally 1000px+).</li>
+            <li><strong>Lighting:</strong> Flat, even lighting with no harsh background cast shadows.</li>
+          </ul>
+          <div class="guide-bad">
+            <strong>Avoid:</strong> Sleeves spread like wings (causes cape-like distortion), folded hems, side angles, or model wearers.
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CARD 2: Garment Details -->
+    <section class="admin-card" id="card-details">
+      <div class="card-heading">
+        <span class="step-num">2</span>
+        <h2>Garment Details</h2>
+        <span class="sub">Identification & Physical Characteristics</span>
+      </div>
+
+      <div class="details-form-grid">
+        <div class="form-group" style="grid-column: span 2;">
+          <label for="garment-name">Garment Name</label>
+          <input type="text" id="garment-name" class="form-input" placeholder="e.g. Classic Merino Crewneck">
+        </div>
+
+        <div class="form-group">
+          <label for="garment-id">Slug ID <span class="tooltip-hint">(auto-generated, unique)</span></label>
+          <input type="text" id="garment-id" class="form-input" placeholder="classic-merino-crewneck">
+        </div>
+
+        <div class="form-group">
+          <label for="garment-category">Category</label>
+          <select id="garment-category" class="form-select">
+            <option value="tops">Tops</option>
+            <option value="outerwear">Outerwear</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="garment-type">Garment Type</label>
+          <select id="garment-type" class="form-select">
+            <option value="sweater">Sweater</option>
+            <option value="t-shirt">T-Shirt</option>
+            <option value="cardigan">Cardigan</option>
+            <option value="hoodie">Hoodie</option>
+            <option value="shirt">Shirt</option>
+            <option value="jacket">Jacket</option>
+            <option value="coat">Coat</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="garment-gender">Gender</label>
+          <select id="garment-gender" class="form-select">
+            <option value="female">Female</option>
+            <option value="male">Male</option>
+            <option value="unisex">Unisex</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="garment-design-fit">Design Fit</label>
+          <select id="garment-design-fit" class="form-select">
+            <option value="regular">Regular</option>
+            <option value="fitted">Fitted</option>
+            <option value="relaxed">Relaxed</option>
+            <option value="oversized">Oversized</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="garment-sleeve-type">Sleeve Type</label>
+          <select id="garment-sleeve-type" class="form-select">
+            <option value="long">Long Sleeve</option>
+            <option value="short">Short Sleeve</option>
+            <option value="none">Sleeveless</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="garment-length-style">Length Style</label>
+          <select id="garment-length-style" class="form-select">
+            <option value="regular">Regular (hip / upper thigh)</option>
+            <option value="long">Long coat (knee / calf) – length not scored</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="garment-stretch">Fabric Stretch <span class="tooltip-hint" title="Fraction of stretch, e.g. 0.02 = 2%, 0.10 = 10%">(fraction 0–0.3)</span></label>
+          <input type="number" id="garment-stretch" class="form-input" min="0" max="0.3" step="0.01" value="0.05">
+        </div>
+
+        <div class="form-group">
+          <label for="garment-color">Main Colour</label>
+          <div style="display:flex;align-items:center;gap:10px;">
+            <input type="color" id="garment-color" value="#161616" style="width:44px;height:36px;padding:0;border:1px solid var(--line);border-radius:4px;cursor:pointer;">
+            <span id="garment-color-hex" class="form-text text-sm font-mono" style="font-family:var(--font-mono)">#161616</span>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="garment-chart-type">Size Chart Type</label>
+          <select id="garment-chart-type" class="form-select">
+            <option value="estimated">Estimated Chart</option>
+            <option value="official">Official Chart</option>
+          </select>
+        </div>
+
+        <div class="form-group" style="grid-column: span 2; display:flex; align-items:center; gap:10px; margin-top:6px; padding:10px; background:var(--paper-2); border:1px solid var(--line); border-radius:6px;">
+          <input type="checkbox" id="garment-render-mode" value="template" style="width:18px;height:18px;cursor:pointer;">
+          <div>
+            <label for="garment-render-mode" style="margin:0;cursor:pointer;font-weight:600;display:block;">Standard-pose AI image (template fit)</label>
+            <span class="text-xs muted">Preserves drop-shoulders, collar height, and AI ghost-mannequin proportions with uniform scale.</span>
+            <div style="margin-top:8px; display:flex; align-items:center; gap:8px;">
+              <label for="garment-ref-size" class="text-xs" style="margin:0;">AI image looks like size</label>
+              <select id="garment-ref-size" style="width:auto;">
+                <option value="S">S</option>
+                <option value="M" selected>M</option>
+                <option value="L">L</option>
+                <option value="XL">XL</option>
+              </select>
+            </div>
+            <div style="margin-top:6px; display:flex; align-items:center; gap:8px;">
+              <label for="garment-mannequin-torso" class="text-xs" style="margin:0;">Mannequin torso (cm)</label>
+              <input type="number" id="garment-mannequin-torso" value="46" min="30" max="70" step="0.5" style="width:65px; padding:3px 6px; font-size:0.8125rem;">
+              <span class="text-xs muted">(default 46 cm)</span>
+            </div>
+            <span class="text-xs muted">Other sizes are drawn smaller/larger relative to this one.</span>
+          </div>
+        </div>
+
+        <!-- Worn Reference Image Section (Phase 4B) -->
+        <div id="template-ref-section" class="form-group" style="display:none; grid-column: span 2; margin-top:8px; padding:14px; background:var(--paper-1); border:1px solid var(--accent); border-radius:6px; flex-direction:column; gap:10px;">
+          <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+            <div>
+              <label style="font-weight:700; color:var(--text); margin-bottom:2px; display:block;">Worn reference image (step A: garment on the mannequin)</label>
+              <span class="text-xs muted">Upload step A photo of the garment on standard mannequin. MediaPipe detects exact shoulder/hip/arm joints so manual anchors are not needed.</span>
+            </div>
+            <span class="badge" style="background:var(--accent);color:#fff;font-size:0.75rem;">Phase 4B</span>
+          </div>
+
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <input type="file" id="ref-image-input" accept="image/*" style="display:none;">
+            <button type="button" class="btn btn-ghost" id="select-ref-image-btn" style="border:1px solid var(--line);">Select Reference Image</button>
+            <span id="ref-file-name" class="text-xs muted">No reference image chosen</span>
+            <button type="button" class="btn btn-ghost text-xs" id="clear-ref-image-btn" style="display:none; color:var(--danger); border:1px solid var(--line);">Remove</button>
+          </div>
+
+          <!-- Phase 7: Cut garment directly from worn reference -->
+          <div id="cut-garment-section" style="margin-top:6px; padding:10px 12px; background:var(--paper-2); border:1px solid var(--line); border-radius:6px; display:flex; flex-direction:column; gap:8px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+              <button type="button" class="btn btn-primary" id="cut-garment-btn" style="font-size:0.8125rem; font-weight:600;">
+                ✂️ Cut garment from worn image (no ghost step)
+              </button>
+              <span class="badge" style="background:var(--accent); color:#fff; font-size:0.7rem;">Phase 7</span>
+            </div>
+            <div style="display:flex; gap:14px; align-items:center; flex-wrap:wrap;">
+              <div style="display:flex; align-items:center; gap:6px;">
+                <label for="cut-legs-select" class="text-xs" style="font-weight:600; white-space:nowrap;">Mannequin legs:</label>
+                <select id="cut-legs-select" class="form-select" style="font-size:0.8125rem; padding:3px 8px; width:auto;">
+                  <option value="black" selected>Black leggings</option>
+                  <option value="green">Green leggings</option>
+                </select>
+              </div>
+
+              <div style="display:flex; align-items:center; gap:6px;">
+                <label for="cut-neckline-select" class="text-xs" style="font-weight:600; white-space:nowrap;">Neckline:</label>
+                <select id="cut-neckline-select" class="form-select" style="font-size:0.8125rem; padding:3px 8px; width:auto;">
+                  <option value="closed" selected>Closed collar</option>
+                  <option value="openV">Open V (top underneath shows)</option>
+                </select>
+              </div>
+
+              <label style="display:flex; align-items:center; gap:6px; font-size:0.8125rem; cursor:pointer; user-select:none;">
+                <input type="checkbox" id="cut-garment-white" style="cursor:pointer;">
+                <span>Garment is white / very light</span>
+              </label>
+            </div>
+            <div id="cut-status-msg" style="display:none; font-size:0.8125rem;"></div>
+          </div>
+
+          <div id="auto-align-badge" style="display:none; padding:8px 12px; background:rgba(16, 185, 129, 0.12); border:1px solid rgba(16, 185, 129, 0.4); border-radius:6px; color:#10b981; font-weight:600; font-size:0.8125rem; align-items:center; gap:8px;">
+            <span>✓ Automatically aligned (cut from worn reference)</span>
+          </div>
+
+          <div id="ref-pose-status" style="display:none; font-size:0.8125rem;"></div>
+
+          <!-- Preview canvas with detected landmarks overlaid -->
+          <div id="ref-preview-wrap" style="display:none; flex-direction:column; gap:6px;">
+            <span class="text-xs muted" style="font-weight:600;">Detected Reference Pose Landmarks:</span>
+            <div style="max-width:100%; max-height:360px; border:1px solid var(--line); border-radius:6px; overflow:hidden; background:#111; display:flex; justify-content:center; align-items:center;">
+              <canvas id="ref-pose-canvas" style="max-width:100%; max-height:360px; object-fit:contain;"></canvas>
+            </div>
+          </div>
+
+          <!-- Align Garment to Reference Panel (Phase 4C) -->
+          <div id="ghost-align-panel" style="display:none; flex-direction:column; gap:12px; margin-top:8px; padding-top:12px; border-top:1px solid var(--line);">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+              <div>
+                <label style="font-weight:700; color:var(--text); margin-bottom:2px; display:block;">Align Ghost PNG to Reference (Phase 4C)</label>
+                <span class="text-xs muted">Drag ghost garment over reference mannequin. Use sliders or arrow keys (1px nudges, Shift+arrows 10px) to match exact position and scale.</span>
+              </div>
+              <button type="button" class="btn btn-ghost text-xs" id="reset-align-btn" style="border:1px solid var(--line);">↺ Auto Reset</button>
+            </div>
+
+            <!-- Controls bar -->
+            <div style="display:flex; gap:16px; flex-wrap:wrap; background:var(--paper-2); padding:10px 14px; border:1px solid var(--line); border-radius:6px; align-items:center;">
+              <!-- Scale Slider (0.3 - 2.0, step 0.005) -->
+              <div style="flex:1; min-width:180px; display:flex; flex-direction:column; gap:4px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <label for="align-scale-slider" class="text-xs" style="font-weight:600;">Scale: <span id="align-scale-val" class="font-mono text-xs" style="color:var(--accent);">1.000×</span></label>
+                  <span class="text-xs muted">(0.3× – 2.0×)</span>
+                </div>
+                <input type="range" id="align-scale-slider" min="0.3" max="2.0" step="0.005" value="1.0" style="width:100%; cursor:pointer;">
+              </div>
+
+              <!-- Opacity Slider (0.1 - 1.0, step 0.05, default 0.5) -->
+              <div style="flex:1; min-width:160px; display:flex; flex-direction:column; gap:4px;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                  <label for="align-opacity-slider" class="text-xs" style="font-weight:600;">Ghost Opacity: <span id="align-opacity-val" class="font-mono text-xs" style="color:var(--accent);">50%</span></label>
+                  <span class="text-xs muted">(10% – 100%)</span>
+                </div>
+                <input type="range" id="align-opacity-slider" min="0.1" max="1.0" step="0.05" value="0.5" style="width:100%; cursor:pointer;">
+              </div>
+
+              <!-- Offset info -->
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span class="text-xs muted">Offset:</span>
+                <span id="align-offset-val" class="font-mono text-xs" style="background:var(--paper-1); padding:3px 6px; border:1px solid var(--line); border-radius:4px;">dx: 0, dy: 0</span>
+              </div>
+            </div>
+
+            <!-- Alignment Canvas Container -->
+            <div id="align-canvas-wrap" style="position:relative; max-width:100%; border:1px solid var(--line); border-radius:6px; overflow:hidden; background:#18181b; display:flex; justify-content:center; align-items:center; cursor:grab; user-select:none;">
+              <canvas id="align-canvas" tabindex="0" style="max-width:100%; max-height:480px; object-fit:contain; outline:none; display:block;"></canvas>
+            </div>
+            <span class="text-xs muted">💡 Click & drag canvas to move ghost garment. Use arrow keys for 1px nudges (Shift+arrows for 10px).</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CARD 3: Fitting Anchors Canvas -->
+    <section class="admin-card" id="card-anchors">
+      <div class="card-heading">
+        <span class="step-num">3</span>
+        <h2>Interactive Fitting Anchors</h2>
+        <span class="sub" id="anchors-card-sub">Click points in order on the photo</span>
+      </div>
+
+      <div class="anchors-container">
+        <div class="anchors-toolbar">
+          <div class="anchor-prompt">
+            <span>Next Point:</span>
+            <span id="current-point-badge" class="current-point-pill">collarL</span>
+            <span id="point-instruction" class="text-sm muted" style="margin-left:6px;">Click on garment photo</span>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button type="button" class="btn btn-ghost" id="undo-anchor-btn" style="border:1px solid var(--line);font-size:0.8125rem;">Undo Last</button>
+            <button type="button" class="btn btn-ghost" id="reset-anchors-btn" style="border:1px solid var(--line);font-size:0.8125rem;">Reset All</button>
+          </div>
+        </div>
+
+        <div class="anchor-canvas-wrap" id="anchor-canvas-wrap">
+          <canvas id="anchor-canvas" width="600" height="600"></canvas>
+        </div>
+
+        <div id="anchor-validation-msg" class="error-banner" style="display:none;"></div>
+      </div>
+    </section>
+
+    <!-- CARD 4: Size Chart Table -->
+    <section class="admin-card" id="card-chart">
+      <div class="card-heading">
+        <span class="step-num">4</span>
+        <h2>Size Chart (cm)</h2>
+        <span class="sub">Full circumferences & linear measurements</span>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+        <span class="text-sm muted">Enter dimensions for S, M, L, XL in centimetres.</span>
+        <button type="button" class="btn btn-ghost" id="fill-default-chart-btn" style="border:1px solid var(--line);font-size:0.8125rem;">⚡ Fill Default Chart</button>
+      </div>
+
+      <div id="chart-fallback-notice" class="notice-banner" style="display:none;"></div>
+
+      <div class="chart-table-wrap">
+        <table class="chart-table" id="size-chart-table">
+          <thead>
+            <tr>
+              <th style="width:70px;">Size</th>
+              <th>Chest (cm)</th>
+              <th>Waist (cm)</th>
+              <th>Shoulder (cm)</th>
+              <th>Sleeve (cm)</th>
+              <th>Length (cm)</th>
+              <th>Hem (cm)</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr data-size="S">
+              <td class="size-name-cell">S</td>
+              <td><input type="number" step="0.5" data-field="chest" placeholder="e.g. 92"></td>
+              <td><input type="number" step="0.5" data-field="waist" placeholder="e.g. 84"></td>
+              <td><input type="number" step="0.5" data-field="shoulder" placeholder="e.g. 39"></td>
+              <td><input type="number" step="0.5" data-field="sleeve" placeholder="e.g. 59"></td>
+              <td><input type="number" step="0.5" data-field="length" placeholder="e.g. 60"></td>
+              <td><input type="number" step="0.5" data-field="hem" placeholder="e.g. 92"></td>
+            </tr>
+            <tr data-size="M">
+              <td class="size-name-cell">M</td>
+              <td><input type="number" step="0.5" data-field="chest" placeholder="e.g. 98"></td>
+              <td><input type="number" step="0.5" data-field="waist" placeholder="e.g. 90"></td>
+              <td><input type="number" step="0.5" data-field="shoulder" placeholder="e.g. 40.5"></td>
+              <td><input type="number" step="0.5" data-field="sleeve" placeholder="e.g. 60"></td>
+              <td><input type="number" step="0.5" data-field="length" placeholder="e.g. 62"></td>
+              <td><input type="number" step="0.5" data-field="hem" placeholder="e.g. 98"></td>
+            </tr>
+            <tr data-size="L">
+              <td class="size-name-cell">L</td>
+              <td><input type="number" step="0.5" data-field="chest" placeholder="e.g. 104"></td>
+              <td><input type="number" step="0.5" data-field="waist" placeholder="e.g. 96"></td>
+              <td><input type="number" step="0.5" data-field="shoulder" placeholder="e.g. 42"></td>
+              <td><input type="number" step="0.5" data-field="sleeve" placeholder="e.g. 61"></td>
+              <td><input type="number" step="0.5" data-field="length" placeholder="e.g. 64"></td>
+              <td><input type="number" step="0.5" data-field="hem" placeholder="e.g. 104"></td>
+            </tr>
+            <tr data-size="XL">
+              <td class="size-name-cell">XL</td>
+              <td><input type="number" step="0.5" data-field="chest" placeholder="e.g. 110"></td>
+              <td><input type="number" step="0.5" data-field="waist" placeholder="e.g. 102"></td>
+              <td><input type="number" step="0.5" data-field="shoulder" placeholder="e.g. 43.5"></td>
+              <td><input type="number" step="0.5" data-field="sleeve" placeholder="e.g. 62"></td>
+              <td><input type="number" step="0.5" data-field="length" placeholder="e.g. 66"></td>
+              <td><input type="number" step="0.5" data-field="hem" placeholder="e.g. 110"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="chart-definitions">
+        <strong>Measurement Definitions:</strong><br>
+        • <em>Chest / Waist / Hem:</em> FULL circumference around body in cm.<br>
+        • <em>Shoulder:</em> Seam-to-seam straight across back.<br>
+        • <em>Sleeve:</em> Shoulder point down outer arm to cuff (0 cm if short sleeve / sleeveless).<br>
+        • <em>Length:</em> Shoulder high point straight down to bottom hem.
+      </div>
+
+      <div id="chart-validation-msg" class="error-banner" style="display:none;"></div>
+    </section>
+
+    <!-- CARD 5: Save & Preview -->
+    <section class="admin-card" id="card-save">
+      <div class="card-heading">
+        <span class="step-num">5</span>
+        <h2>Save & Export</h2>
+        <span class="sub">Store locally or export files</span>
+      </div>
+
+      <div class="actions-row">
+        <button type="button" class="btn btn-primary" id="save-garment-btn" style="font-size:0.9375rem;padding:10px 24px;">Save to My Wardrobe</button>
+        <a href="#" class="btn btn-ghost" id="try-on-link" target="_blank" style="display:none;border:1px solid var(--line);font-size:0.9375rem;padding:10px 20px;">Try It On ↗</a>
+        <button type="button" class="btn btn-ghost" id="download-files-btn" style="display:none;border:1px solid var(--line);font-size:0.9375rem;padding:10px 20px;">Download Garment Files</button>
+      </div>
+
+      <div class="notice-banner">
+        <span>ℹ️</span>
+        <span>Saved only in this browser (IndexedDB). Download the files (<span class="font-mono">&lt;id&gt;.png</span> &amp; <span class="font-mono">&lt;id&gt;.json</span>) to permanently add them to the project repository.</span>
+      </div>
+
+      <div id="save-status-msg" style="display:none;"></div>
+    </section>
+
+    <!-- Saved Custom Garments Management -->
+    <section class="saved-section">
+      <h3>
+        <span>Your Custom Garments</span>
+        <span id="saved-count-badge" class="badge" style="font-size:0.75rem;background:var(--paper-2);border:1px solid var(--line);padding:2px 8px;border-radius:999px;">0</span>
+      </h3>
+      <div id="saved-garments-list" class="saved-grid">
+        <!-- Rendered by JS -->
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="js/pages/admin.js"></script>
+</body>
+</html>

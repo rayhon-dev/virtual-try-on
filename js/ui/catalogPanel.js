@@ -4,6 +4,9 @@ export const escapeHtml = (text) => String(text).replace(/[&<>"']/g, (c) => (
 ));
 const capitalize = (s) => s.charAt(0).toUpperCase() + s.slice(1);
 
+/** True when the garment's size chart is estimated (not copied from the shop's own chart). */
+export const isEstimated = (garment) => garment.sizeChart !== 'official';
+
 function jacketIcon(color) {
   return `
     <svg viewBox="0 0 64 64" aria-hidden="true">
@@ -25,7 +28,8 @@ export function renderCatalog(container, { garments, selectedId, badges = {}, on
             ${g.image ? `<img src="${escapeHtml(g.image)}" alt="" loading="lazy">` : jacketIcon(g.color ?? '#888')}
           </span>
           <span class="card-name">${escapeHtml(g.name)}</span>
-          <span class="card-meta">${capitalize(g.designFit)} Fit</span>
+          <span class="card-meta">${capitalize(g.designFit)} fit</span>
+          ${isEstimated(g) ? '<span class="chart-tag" title="The size chart of this item is estimated, not the shop\'s official chart">Estimated chart</span>' : ''}
           ${badges[g.id] ? `<span class="size-badge" title="Recommended size for you">${escapeHtml(badges[g.id])}</span>` : ''}
         </button>`).join('')}
     </div>`;

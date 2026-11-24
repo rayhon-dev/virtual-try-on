@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>Virtual Dressing Room — FitCheck Studio</title>
+
+  <!-- Google Fonts (Loaded optionally & silently without blocking if offline) -->
+  <script>
+    if (typeof navigator !== 'undefined' && navigator.onLine) {
+      const fontLink = document.createElement('link');
+      fontLink.rel = 'stylesheet';
+      fontLink.href = 'https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap';
+      fontLink.onerror = () => {};
+      document.head.appendChild(fontLink);
+    }
+  </script>
+
+  <link rel="stylesheet" href="css/base.css">
+  <link rel="stylesheet" href="css/pages.css">
+  <link rel="stylesheet" href="css/dressing.css">
+</head>
+<body>
+  <div class="dressing-layout">
+    <header class="topbar">
+      <a class="logo" href="dressing.html">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="m21 8-2 2-1.5-1.5 2-2z"/><path d="M15.3 3.9a9 9 0 0 1 4.8 4.8"/><path d="M7 18h10"/><path d="M7 14h10"/><path d="M7 10h10"/><path d="M7 22V5a2 2 0 0 1 2-2h6a2 2 0 0 1 2 2v17"/><path d="M12 2v2"/>
+        </svg>
+        FitCheck Studio
+      </a>
+      <div class="topbar-status">
+        <span class="status-badge"><span class="status-badge-dot"></span> 2D Virtual Fitting Room</span>
+      </div>
+    </header>
+
+    <div class="dressing-body">
+      <!-- Left Column: Selected Pieces & Model Setup -->
+      <aside class="dressing-sidebar" aria-label="Selected Pieces and Model">
+        <section class="card new-look-card">
+          <div class="card-header-row">
+            <h2>Fitting Rack</h2>
+          </div>
+          <div id="worn-items-list" class="worn-items-list">
+            <div class="empty-rack-msg">
+              <svg class="empty-rack-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                <path d="M16 11V7a4 4 0 0 0-8 0v4M5 9h14l1 12H4L5 9z"/>
+              </svg>
+              <span class="empty-rack-title">No garments on rack</span>
+              <span class="text-xs muted">Click items from the collection to try them on</span>
+            </div>
+          </div>
+          <div id="fit-result-area" class="fit-result-area" hidden>
+            <!-- Rendered dynamically by JS: preference selector, verdict, score, zone table -->
+          </div>
+          <div class="new-look-actions">
+            <button type="button" class="btn btn-ghost" id="take-off-btn" disabled>Clear Outfit</button>
+          </div>
+        </section>
+
+        <section class="card avatar-control-card">
+          <div class="card-header-row">
+            <h2>Your Model</h2>
+          </div>
+          <div id="avatar-status-area">
+            <div id="avatar-message-area" class="message-area" role="alert" hidden></div>
+
+            <!-- STATE 1: Upload -->
+            <div id="flow-upload" class="flow-state">
+              <div class="field">
+                <label class="field-label" for="photo-input">Upload your full-length photo</label>
+                <input type="file" id="photo-input" accept="image/png, image/jpeg, image/webp, .png, .jpg, .jpeg, .webp" class="file-input">
+              </div>
+
+              <!-- Photo Guidelines -->
+              <div class="photo-guidelines">
+                <div class="photo-guidelines-figure">
+                  <svg class="guidelines-silhouette" viewBox="0 0 60 140" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                    <!-- Head -->
+                    <ellipse cx="30" cy="14" rx="8" ry="10" fill="#CBD5E1"/>
+                    <!-- Neck -->
+                    <rect x="27" y="24" width="6" height="6" rx="2" fill="#CBD5E1"/>
+                    <!-- Torso -->
+                    <path d="M20 30 L40 30 L42 70 L18 70 Z" fill="#CBD5E1" rx="2"/>
+                    <!-- Arms slightly away -->
+                    <path d="M20 32 L12 60 L15 61 L22 36" fill="#CBD5E1"/>
+                    <path d="M40 32 L48 60 L45 61 L38 36" fill="#CBD5E1"/>
+                    <!-- Legs -->
+                    <rect x="20" y="70" width="9" height="50" rx="3" fill="#CBD5E1"/>
+                    <rect x="31" y="70" width="9" height="50" rx="3" fill="#CBD5E1"/>
+                    <!-- Shoes -->
+                    <rect x="18" y="118" width="13" height="6" rx="2" fill="#94A3B8"/>
+                    <rect x="30" y="118" width="13" height="6" rx="2" fill="#94A3B8"/>
+                    <!-- Margin arrows -->
+                    <line x1="30" y1="0" x2="30" y2="5" stroke="#94A3B8" stroke-width="0.8" stroke-dasharray="2 1"/>
+                    <line x1="30" y1="128" x2="30" y2="140" stroke="#94A3B8" stroke-width="0.8" stroke-dasharray="2 1"/>
+                  </svg>
+                </div>
+                <ul class="photo-guidelines-list">
+                  <li>One person, head to feet, shoes visible, nothing cut off</li>
+                  <li>Facing the camera, standing straight, arms slightly away from the body</li>
+                  <li>Camera at chest height, 2–3 m away, vertical photo</li>
+                  <li>Light, fitted clothes (T-shirt, leggings); no coat or baggy clothes</li>
+                  <li>Bright even light, simple background, nobody else in the photo</li>
+                </ul>
+                <p class="photo-guidelines-formats">JPG, PNG or WebP · Max 10 MB</p>
+              </div>
+
+              <div class="avatar-action-column" style="display:flex;flex-direction:column;gap:8px">
+                <button type="button" class="btn btn-primary" id="start-avatar-btn">Create Avatar (with AI)</button>
+                <button type="button" class="btn btn-ghost" id="use-photo-direct-btn" style="border:1px solid var(--border-color);font-size:0.82rem">Use original photo (no AI)</button>
+              </div>
+
+              <p class="privacy-note">Your photo is sent to Google Gemini to create your avatar and is stored only on this device. You can delete it any time.</p>
+            </div>
+
+            <!-- STATE 2: Working / Processing -->
+            <div id="flow-working" class="flow-state" hidden>
+              <div class="working-indicator">
+                <div class="spinner"></div>
+                <p class="working-text" id="working-text">Checking photo…</p>
+              </div>
+              <button type="button" class="btn btn-ghost" id="cancel-processing-btn">Cancel</button>
+            </div>
+
+            <!-- STATE 3: Review (original vs AI side by side) -->
+            <div id="flow-review" class="flow-state" hidden>
+              <p class="text-sm muted" style="margin-bottom:10px">Compare your original photo with the AI-generated avatar.</p>
+              <div class="review-compare">
+                <div class="review-img-box">
+                  <img id="review-original-img" alt="Original photo">
+                  <span class="review-label">Original</span>
+                </div>
+                <div class="review-img-box">
+                  <img id="review-ai-img" alt="AI avatar">
+                  <span class="review-label">Avatar</span>
+                </div>
+              </div>
+              <div id="review-warning" class="review-warning" hidden></div>
+              <div class="review-actions">
+                <button type="button" class="btn btn-primary" id="accept-avatar-btn">Use This Avatar</button>
+                <button type="button" class="btn btn-ghost" id="retry-avatar-btn">Try Again</button>
+                <button type="button" class="btn btn-ghost" id="cancel-avatar-btn">Cancel</button>
+              </div>
+            </div>
+
+            <!-- STATE 4: Measurements Form -->
+            <div id="flow-measurements" class="flow-state" hidden>
+              <p class="text-sm muted" style="margin-bottom:10px">Enter your body measurements so garments fit correctly.</p>
+              <div class="field">
+                <label class="field-label" for="gender-select">Gender</label>
+                <select id="gender-select" class="text-input">
+                  <option value="female">Female</option>
+                  <option value="male">Male</option>
+                </select>
+              </div>
+              <div id="estimate-banner" class="review-warning" hidden>
+                Values below are <strong>estimated from your photo</strong> using your height.
+                Change your height first, then check every value (a tape measure is best).
+              </div>
+              <div id="measurements-fields-container">
+                <!-- Built dynamically by JS from MEASUREMENT_FIELDS -->
+              </div>
+              <div id="measurement-cross-check" class="review-warning" hidden></div>
+              <label id="estimate-confirm-row" class="text-sm" style="display:flex;gap:8px;align-items:flex-start;margin:10px 0;cursor:pointer" hidden>
+                <input type="checkbox" id="estimate-confirm" style="margin-top:3px">
+                <span>I checked these measurements and they are correct.</span>
+              </label>
+              <button type="button" class="btn btn-primary" id="save-measurements-btn">Save &amp; Continue</button>
+            </div>
+
+            <!-- STATE 5: Ready (avatar active, summary) -->
+            <div id="flow-ready" class="flow-state" hidden>
+              <div class="model-status-header">
+                <span class="status-dot"></span>
+                <span>Model Active &amp; Calibrated</span>
+              </div>
+              <div class="readout-box" id="avatar-readout-box">
+                <div class="stat-cell">
+                  <span class="stat-val" id="readout-height">--</span>
+                  <span class="stat-lbl">Height</span>
+                </div>
+                <div class="stat-cell">
+                  <span class="stat-val" id="readout-scale">--</span>
+                  <span class="stat-lbl">Scale</span>
+                </div>
+                <div class="stat-cell">
+                  <span class="stat-val" id="readout-shoulder">--</span>
+                  <span class="stat-lbl">Shoulder</span>
+                </div>
+              </div>
+              <div id="readout-measurements" class="readout-measurements"></div>
+              <div class="avatar-action-row">
+                <button type="button" class="btn btn-ghost" id="edit-measurements-btn">Edit Measurements</button>
+                <button type="button" class="btn btn-ghost" id="new-photo-btn">New Photo</button>
+                <button type="button" class="btn btn-ghost" id="delete-avatar-btn">Delete Avatar</button>
+              </div>
+            </div>
+
+            <!-- Developer section (only visible with ?dev=1) -->
+            <div id="flow-dev" class="flow-state dev-section" hidden>
+              <h3 class="dev-section-title">Developer Tools</h3>
+              <div class="field">
+                <label class="field-label" for="ready-photo-input">Upload ready avatar (no API)</label>
+                <input type="file" id="ready-photo-input" accept="image/png, image/jpeg, .png, .jpg, .jpeg" class="file-input">
+              </div>
+              <button type="button" class="btn btn-ghost" id="upload-ready-btn" style="width:100%;margin-bottom:8px">Set Model</button>
+              <div class="field">
+                <label class="field-label" for="api-key-input">Access Token (manual)</label>
+                <input type="password" id="api-key-input" placeholder="Enter key (session only)" class="text-input">
+              </div>
+              <button type="button" class="btn btn-ghost" id="create-avatar-btn" style="width:100%;margin-bottom:8px">Generate Model (manual)</button>
+              <button type="button" class="btn btn-ghost" id="load-test-avatar-btn" style="width:100%;margin-bottom:8px">Use Demo Model</button>
+              <div class="avatar-action-row" style="margin-top:8px">
+                <label class="checkbox-label" for="debug-fit-toggle">
+                  <input type="checkbox" id="debug-fit-toggle"> Debug fit
+                </label>
+                <label class="checkbox-label" for="show-landmarks-toggle">
+                  <input type="checkbox" id="show-landmarks-toggle"> Pose Skeleton
+                </label>
+                <label class="checkbox-label" for="show-garment-anchors-toggle">
+                  <input type="checkbox" id="show-garment-anchors-toggle"> Fitting Anchors
+                </label>
+                <label class="checkbox-label" for="smooth-sleeves-toggle">
+                  <input type="checkbox" id="smooth-sleeves-toggle" checked> Smooth sleeves
+                </label>
+              </div>
+            </div>
+          </div>
+        </section>
+      </aside>
+
+      <!-- Center Column: Avatar Stage Backdrop & Canvas -->
+      <main class="dressing-stage stage" aria-label="Fitting Stage">
+        <div class="stage-figure">
+          <div class="stage-toolbar" id="stage-toolbar" style="position:absolute; top:16px; right:16px; display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.92); backdrop-filter:blur(8px); padding:6px 14px; border-radius:999px; box-shadow:0 4px 14px rgba(0,0,0,0.08); font-size:0.75rem; font-weight:600; color:var(--ink-dark); z-index:10;">
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; margin:0;">
+              <input type="checkbox" id="realistic-compositing-toggle" checked style="cursor:pointer; accent-color:var(--accent);">
+              <span>Realistic compositing</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; margin:0;">
+              <input type="checkbox" id="fit-labels-toggle" checked style="cursor:pointer; accent-color:var(--accent);">
+              <span>Fit labels</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; margin:0;">
+              <input type="checkbox" id="fit-map-toggle" style="cursor:pointer; accent-color:var(--accent);">
+              <span>Fit map</span>
+            </label>
+          </div>
+          <canvas id="avatar-canvas" aria-label="Digital Dressing Room"></canvas>
+          <div id="fit-map-tooltip" class="fit-map-tooltip" hidden></div>
+          <div id="size-pills" class="size-pills-container" hidden>
+            <button type="button" class="size-pill" data-size="S">S</button>
+            <button type="button" class="size-pill" data-size="M">M</button>
+            <button type="button" class="size-pill" data-size="L">L</button>
+            <button type="button" class="size-pill" data-size="XL">XL</button>
+          </div>
+        </div>
+        <div id="fit-map-legend" class="fit-map-legend" hidden>
+          <span class="legend-item"><span class="legend-chip too-tight"></span><span class="legend-icon">↓↓</span> Too tight</span>
+          <span class="legend-item"><span class="legend-chip tight"></span><span class="legend-icon">↓</span> Tight</span>
+          <span class="legend-item"><span class="legend-chip good"></span><span class="legend-icon">✓</span> Good</span>
+          <span class="legend-item"><span class="legend-chip loose"></span><span class="legend-icon">↑</span> Loose</span>
+          <span class="legend-item"><span class="legend-chip too-loose"></span><span class="legend-icon">↑↑</span> Too loose</span>
+        </div>
+        <p class="stage-caption" id="dressing-caption">Interactive Studio Fitting · Real-Time Drape</p>
+      </main>
+
+      <!-- Right Column: Wardrobe Collection -->
+      <section class="dressing-catalog" aria-label="Wardrobe Collection">
+        <div class="catalog-header">
+          <h2>Wardrobe Collection</h2>
+          <p class="muted text-sm">Curated pieces available for virtual fitting</p>
+        </div>
+        <div class="tabs catalog-tabs" role="tablist" style="margin-bottom:12px">
+          <button type="button" class="tab is-active" id="cat-tab-outerwear" role="tab" data-category="outerwear" aria-selected="true">Outerwear</button>
+          <button type="button" class="tab" id="cat-tab-tops" role="tab" data-category="tops" aria-selected="false">Tops</button>
+        </div>
+        <div id="catalog-grid" class="catalog-grid">
+          <!-- Populated by JS -->
+        </div>
+      </section>
+    </div>
+    <footer style="padding:8px 24px;text-align:right;font-size:0.75rem;color:var(--ink-muted);background:transparent;">
+      <a href="admin.html" style="color:inherit;text-decoration:none;opacity:0.6;">Admin · Add Garment</a>
+    </footer>
+  </div>
+
+  <script type="module" src="js/pages/dressing.js"></script>
+</body>
+</html>

@@ -549,3 +549,17 @@
 }
 
 .sheet-form { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+/* "Estimated chart" label: the size chart of this item is not the shop's official one */
+.chart-tag {
+  display: block;
+  width: fit-content;
+  padding: 2px 8px;
+  border-radius: var(--radius-pill);
+  background: #fdf3e2;
+  color: #8a5a12;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+}
+.verdict-card .chart-tag { margin-top: var(--space-2); }

@@ -1,8 +1,28 @@
 {
-  "_note": "Catalog. The first two items are real product photos with SAMPLE size charts (estimated, not the shop's real chart); the 'SAMPLE ...' items have no photo and are drawn as plain coloured shells. All sizes in cm. chest/waist/hem are FULL circumferences (if a shop gives flat/half-chest, multiply by 2). shoulder = seam to seam. sleeve = shoulder seam to cuff. length = shoulder point to hem. stretch = fraction (0.15 = 15%). gender = which avatar it is shown for (female / male / unisex). anchors = pixel points in the cut-out photo (see README).",
+  "_note": "Catalog. sizeChart = \"estimated\" (invented / guessed numbers, shown with an \"Estimated chart\" label) or \"official\" (copied from the shop's own chart). The first two items are real product photos with SAMPLE size charts (estimated, not the shop's real chart); the 'SAMPLE ...' items have no photo and are drawn as plain coloured shells. All sizes in cm. chest/waist/hem are FULL circumferences (if a shop gives flat/half-chest, multiply by 2). shoulder = seam to seam. sleeve = shoulder seam to cuff. length = shoulder point to hem. stretch = fraction (0.15 = 15%). gender = which avatar it is shown for (female / male / unisex). anchors = pixel points in the cut-out photo (see README).",
   "garments": [
     {
+      "id": "fit-test-female",
+      "sizeChart": "estimated",
+      "name": "FIT TEST Jacket (female 168 cm)",
+      "category": "outerwear",
+      "type": "jacket",
+      "gender": "female",
+      "designFit": "regular",
+      "stretch": 0.02,
+      "color": "#8aa4c8",
+      "style": { "closure": "zip", "collar": "stand", "cuffs": "rib", "hem": "rib", "dropShoulder": false },
+      "sizes": {
+        "S": { "chest": 99, "waist": 87, "shoulder": 40, "sleeve": 58, "length": 53.5, "hem": 92 },
+        "M": { "chest": 105, "waist": 93, "shoulder": 40.5, "sleeve": 58.75, "length": 55, "hem": 98 },
+        "L": { "chest": 111, "waist": 99, "shoulder": 43, "sleeve": 61, "length": 56.5, "hem": 104 },
+        "XL": { "chest": 117, "waist": 105, "shoulder": 44.5, "sleeve": 62.5, "length": 58, "hem": 110 }
+      }
+    },
+    {
       "id": "biker-jacket-women",
+      "hidden": true,
+      "sizeChart": "estimated",
       "name": "Faux Leather Biker Jacket",
       "category": "outerwear",
       "type": "jacket",
@@ -43,6 +63,7 @@
     },
     {
       "id": "leather-jacket-men",
+      "sizeChart": "estimated",
       "name": "Stand-Collar Leather Jacket",
       "category": "outerwear",
       "type": "jacket",
@@ -83,6 +104,7 @@
     },
     {
       "id": "sample-bomber",
+      "sizeChart": "estimated",
       "name": "SAMPLE Classic Bomber",
       "category": "outerwear",
       "type": "jacket",
@@ -108,6 +130,7 @@
     },
     {
       "id": "sample-denim",
+      "sizeChart": "estimated",
       "name": "SAMPLE Trucker Denim Jacket",
       "category": "outerwear",
       "type": "jacket",
@@ -133,8 +156,9 @@
     },
     {
       "id": "sample-cardigan",
+      "sizeChart": "estimated",
       "name": "SAMPLE Knit Cardigan",
-      "category": "outerwear",
+      "category": "tops",
       "type": "cardigan",
       "designFit": "regular",
       "stretch": 0.15,
@@ -158,6 +182,7 @@
     },
     {
       "id": "sample-oversized",
+      "sizeChart": "estimated",
       "name": "SAMPLE Oversized Utility Jacket",
       "category": "outerwear",
       "type": "jacket",

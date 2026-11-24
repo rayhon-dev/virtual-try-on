@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhotoCheck Tests — FitCheck 2D</title>
+  <link rel="stylesheet" href="../css/base.css">
+  <style>
+    .test-page { max-width: 1000px; margin: 0 auto; padding: var(--space-5); display: grid; gap: var(--space-4); }
+    .summary { font-weight: 600; padding: var(--space-3) var(--space-4); border-radius: 8px; }
+    .summary.ok { background: #ECFDF5; color: #065F46; border: 1px solid #A7F3D0; }
+    .summary.fail { background: #FEF2F2; color: #991B1B; border: 1px solid #FCA5A5; }
+    table { width: 100%; border-collapse: collapse; font-size: var(--text-sm); background: #fff; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { background: #F8FAFC; font-weight: 600; color: var(--ink-soft); }
+    .pass { color: #10B981; font-weight: 700; }
+    .fail { color: #DC2626; font-weight: 700; }
+    .test-thumb { width: 70px; height: 105px; object-fit: cover; border-radius: 4px; border: 1px solid var(--line); }
+    .details { font-family: var(--font-mono); font-size: 0.75rem; color: var(--ink-soft); }
+  </style>
+</head>
+<body>
+  <main class="test-page">
+    <h1>Photo Pre-Flight Check Tests</h1>
+    <p class="muted">Validates <code>checkPhoto()</code> from <code>js/core/photoCheck.js</code> using canvas-modified copies of <code>assets/avatars2d/test-avatar.png</code>.</p>
+    <div class="summary" id="summary">Initializing MediaPipe PoseLandmarker…</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Preview</th>
+          <th>Test Case</th>
+          <th>Expected</th>
+          <th>Result</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="test-rows"></tbody>
+    </table>
+  </main>
+
+  <script type="module">
+    import { checkPhoto } from '../js/core/photoCheck.js';
+    import { FilesetResolver, PoseLandmarker } from '../lib/mediapipe/vision_bundle.mjs';
+
+    const summaryEl = document.getElementById('summary');
+    const tbody = document.getElementById('test-rows');
+
+    let passed = 0;
+    let failed = 0;
+    const testResults = [];
+
+    function addRow(thumbCanvas, name, expectedDesc, checkResult, isPass, errorOrMsg) {
+      if (isPass) passed++; else failed++;
+      testResults.push({ name, isPass, checkResult });
+
+      const tr = document.createElement('tr');
+      const thumbTd = document.createElement('td');
+      thumbTd.appendChild(thumbCanvas);
+
+      const nameTd = document.createElement('td');
+      nameTd.innerHTML = `<strong>${name}</strong>`;
+
+      const expTd = document.createElement('td');
+      expTd.textContent = expectedDesc;
+
+      const resTd = document.createElement('td');
+      const errList = (checkResult.errors || []).map(e => `<div>❌ ${e}</div>`).join('');
+      const warnList = (checkResult.warnings || []).map(w => `<div>⚠️ ${w}</div>`).join('');
+      resTd.innerHTML = `<div class="details">${errList || '<div>✓ No errors</div>'}${warnList}</div>`;
+
+      const statusTd = document.createElement('td');
+      statusTd.className = isPass ? 'pass' : 'fail';
+      statusTd.textContent = isPass ? 'PASS' : 'FAIL';
+
+      tr.appendChild(thumbTd);
+      tr.appendChild(nameTd);
+      tr.appendChild(expTd);
+      tr.appendChild(resTd);
+      tr.appendChild(statusTd);
+      tbody.appendChild(tr);
+    }
+
+    async function runTests() {
+      try {
+        summaryEl.textContent = 'Loading MediaPipe PoseLandmarker (numPoses: 2, masks: true)…';
+        const vision = await FilesetResolver.forVisionTasks('../lib/mediapipe');
+        let landmarker = null;
+        try {
+          landmarker = await PoseLandmarker.createFromOptions(vision, {
+            baseOptions: { modelAssetPath: '../lib/mediapipe/pose_landmarker.task', delegate: 'GPU' },
+            runningMode: 'IMAGE',
+            numPoses: 2,
+            outputSegmentationMasks: true
+          });
+        } catch (_) {
+          landmarker = await PoseLandmarker.createFromOptions(vision, {
+            baseOptions: { modelAssetPath: '../lib/mediapipe/pose_landmarker.task', delegate: 'CPU' },
+            runningMode: 'IMAGE',
+            numPoses: 2,
+            outputSegmentationMasks: true
+          });
+        }
+
+        summaryEl.textContent = 'Loading base image assets/avatars2d/test-avatar.png…';
+        const baseImg = new Image();
+        baseImg.src = '../assets/avatars2d/test-avatar.png';
+        await new Promise((resolve, reject) => {
+          baseImg.onload = resolve;
+          baseImg.onerror = () => reject(new Error('Failed to load test-avatar.png'));
+        });
+
+        const origW = baseImg.width;
+        const origH = baseImg.height;
+
+        // ---- TEST 1: The original photo (Clean vertical portrait) ----
+        {
+          const c = document.createElement('canvas');
+          c.className = 'test-thumb';
+          c.width = origW;
+          c.height = origH;
+          const ctx = c.getContext('2d');
+          ctx.drawImage(baseImg, 0, 0);
+
+          const res = await checkPhoto(c, landmarker);
+          const ok = res.ok && res.errors.length === 0;
+          addRow(c, '1. Original Photo', 'ok: true, 0 errors', res, ok);
+        }
+
+        // ---- TEST 2: Feet cropped (Cut off bottom 15%) ----
+        {
+          const c = document.createElement('canvas');
+          c.className = 'test-thumb';
+          c.width = origW;
+          c.height = Math.round(origH * 0.85); // feet sliced off
+          const ctx = c.getContext('2d');
+          ctx.drawImage(baseImg, 0, 0, origW, c.height, 0, 0, origW, c.height);
+
+          const res = await checkPhoto(c, landmarker);
+          // Expect ankles cut off error
+          const hasFeetError = res.errors.some(e => e.toLowerCase().includes('feet') || e.toLowerCase().includes('cut off') || e.toLowerCase().includes('ankle'));
+          const isPass = !res.ok && hasFeetError;
+          addRow(c, '2. Feet Cropped', 'ok: false, "feet cut off" error', res, isPass);
+        }
+
+        // ---- TEST 3: Landscape orientation (width > height) ----
+        {
+          const c = document.createElement('canvas');
+          c.className = 'test-thumb';
+          c.width = 900;
+          c.height = 600; // aspect ratio 600/900 = 0.67 < 1.3
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = '#FFFFFF';
+          ctx.fillRect(0, 0, c.width, c.height);
+          // Draw person scaled into landscape
+          ctx.drawImage(baseImg, 250, 50, 400, 500);
+
+          const res = await checkPhoto(c, landmarker);
+          const hasAspectError = res.errors.some(e => e.toLowerCase().includes('vertical') || e.toLowerCase().includes('portrait') || e.toLowerCase().includes('orientation'));
+          const isPass = !res.ok && hasAspectError;
+          addRow(c, '3. Landscape Orientation', 'ok: false, "portrait orientation" error', res, isPass);
+        }
+
+        // ---- TEST 4: Blank image (No person) ----
+        {
+          const c = document.createElement('canvas');
+          c.className = 'test-thumb';
+          c.width = 700;
+          c.height = 1000;
+          const ctx = c.getContext('2d');
+          ctx.fillStyle = '#F1F5F9';
+          ctx.fillRect(0, 0, c.width, c.height);
+
+          const res = await checkPhoto(c, landmarker);
+          const hasNoPersonError = res.errors.some(e => e.toLowerCase().includes('no person'));
+          const isPass = !res.ok && hasNoPersonError;
+          addRow(c, '4. Blank Image', 'ok: false, "No person detected" error', res, isPass);
+        }
+
+        // ---- TEST 5: Image too small (shorter side < 600px) ----
+        {
+          const c = document.createElement('canvas');
+          c.className = 'test-thumb';
+          c.width = 300;
+          c.height = 450;
+          const ctx = c.getContext('2d');
+          ctx.drawImage(baseImg, 0, 0, c.width, c.height);
+
+          const res = await checkPhoto(c, landmarker);
+          const hasResError = res.errors.some(e => e.toLowerCase().includes('resolution') || e.toLowerCase().includes('shorter side'));
+          const isPass = !res.ok && hasResError;
+          addRow(c, '5. Low Resolution (< 600px)', 'ok: false, "resolution is too low" error', res, isPass);
+        }
+
+        // Summary banner
+        const allPass = failed === 0;
+        summaryEl.className = `summary ${allPass ? 'ok' : 'fail'}`;
+        summaryEl.textContent = `Tests Completed: ${passed} passed, ${failed} failed (${passed}/${passed + failed})`;
+        window.__TEST_RESULTS__ = { total: passed + failed, passed, failed, allPass, testResults };
+
+      } catch (err) {
+        summaryEl.className = 'summary fail';
+        summaryEl.textContent = `Error running tests: ${err.message || err}`;
+        console.error(err);
+      }
+    }
+
+    runTests();
+  </script>
+</body>
+</html>

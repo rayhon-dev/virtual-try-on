@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Try-on Test Grid</title>
+  <style>
+    :root { --ink:#0F172A; --soft:#475569; --line:#E2E8F0; --bg:#F8F9FA; --card:#fff; --bad:#D1344B; --good:#2E8B57; }
+    * { box-sizing: border-box; }
+    body { margin:0; font: 14px/1.45 system-ui, sans-serif; color:var(--ink); background:var(--bg); }
+    header { padding:16px 20px; border-bottom:1px solid var(--line); background:var(--card); position:sticky; top:0; z-index:5; }
+    h1 { font-size:18px; margin:0 0 4px; }
+    .muted { color:var(--soft); font-size:12px; }
+    .controls { display:flex; flex-wrap:wrap; gap:16px; align-items:flex-start; margin-top:10px; }
+    fieldset { border:1px solid var(--line); border-radius:8px; padding:8px 10px; margin:0; max-height:160px; overflow:auto; background:#fff; }
+    legend { font-size:12px; color:var(--soft); padding:0 4px; }
+    label.opt { display:block; white-space:nowrap; }
+    button { height:36px; padding:0 16px; border-radius:8px; border:1px solid var(--ink); background:var(--ink); color:#fff; font-weight:600; cursor:pointer; }
+    button:disabled { opacity:.5; cursor:default; }
+    #status { margin-left:8px; }
+    main { padding:16px 20px; overflow-x:auto; }
+    table { border-collapse:collapse; }
+    th, td { border:1px solid var(--line); padding:6px; vertical-align:top; background:#fff; }
+    th { font-size:12px; text-align:left; max-width:170px; }
+    td img { display:block; width:160px; height:auto; cursor:zoom-in; }
+    .cap { font-size:11px; color:var(--soft); margin-top:4px; }
+    .err { color:var(--bad); font-size:12px; width:160px; }
+    #frames { position:fixed; left:-10000px; top:0; width:900px; height:1300px; }
+    #lightbox { position:fixed; inset:0; background:rgba(15,23,42,.85); display:none; align-items:center; justify-content:center; z-index:10; cursor:zoom-out; }
+    #lightbox img { max-height:94vh; max-width:94vw; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Try-on Test Grid</h1>
+    <div class="muted">Renders every selected avatar × garment in one table, so a change can be checked against all combinations at once.
+      Read-only: nothing is saved (your avatar and measurements are not changed). Add test avatars in <code>tests/fixtures/avatars.json</code>.</div>
+    <div class="controls">
+      <fieldset id="avatar-list"><legend>Avatars</legend></fieldset>
+      <fieldset id="garment-list"><legend>Garments</legend></fieldset>
+      <fieldset><legend>Size</legend>
+        <label class="opt"><input type="radio" name="size" value="best" checked> Best (fitEngine)</label>
+        <label class="opt"><input type="radio" name="size" value="S"> S</label>
+        <label class="opt"><input type="radio" name="size" value="M"> M</label>
+        <label class="opt"><input type="radio" name="size" value="L"> L</label>
+        <label class="opt"><input type="radio" name="size" value="XL"> XL</label>
+      </fieldset>
+      <fieldset><legend>Display</legend>
+        <label class="opt"><input type="checkbox" id="fit-map-toggle"> Fit map</label>
+      </fieldset>
+      <div><button id="run-btn" type="button">Render grid</button><span id="status" class="muted"></span></div>
+    </div>
+  </header>
+  <main><table id="grid"></table></main>
+  <div id="frames" aria-hidden="true"></div>
+  <div id="lightbox"><img alt="Enlarged render"></div>
+
+  <script type="module">
+    import { listCustomGarments } from '../js/core/garmentStore.js';
+
+    const $ = (s) => document.querySelector(s);
+    let avatars = [], garments = [];
+
+    async function loadLists() {
+      try { avatars = (await (await fetch('fixtures/avatars.json', { cache: 'no-store' })).json()).avatars || []; } catch (_) { avatars = []; }
+      let catalog = [];
+      try { catalog = (await (await fetch('../data/garments.json', { cache: 'no-store' })).json()).garments || []; } catch (_) {}
+      let custom = [];
+      try { custom = await listCustomGarments(); } catch (_) {}
+      const ids = new Set(custom.map((g) => g.id));
+      garments = [...custom, ...catalog.filter((g) => !ids.has(g.id))].filter((g) => !g.hidden && g.image);
+
+      $('#avatar-list').insertAdjacentHTML('beforeend', avatars.map((a, i) =>
+        `<label class="opt"><input type="checkbox" data-a="${i}" checked> ${a.label || a.id} (${a.gender}, ${a.h} cm)</label>`).join(''));
+      $('#garment-list').insertAdjacentHTML('beforeend', garments.map((g, i) =>
+        `<label class="opt"><input type="checkbox" data-g="${i}" checked> ${g.name || g.id} · ${g.gender || 'unisex'}${g.renderMode === 'template' ? '' : ' (warp)'}</label>`).join(''));
+    }
+
+    function renderOne(avatar, garmentIds, size, run) {
+      return new Promise((resolve) => {
+        const fitMap = $('#fit-map-toggle')?.checked ? '1' : '0';
+        const p = new URLSearchParams({ grid: '1', run, avatar: avatar.image, gender: avatar.gender || 'female',
+          h: avatar.h, chest: avatar.chest, waist: avatar.waist, hip: avatar.hip, shoulder: avatar.shoulder,
+          garments: garmentIds.join(','), size, fitMap });
+        const frame = document.createElement('iframe');
+        frame.width = 900; frame.height = 1300;
+        const onMsg = (e) => {
+          const d = e.data;
+          if (!d || d.source !== 'tryon-grid' || d.run !== run) return;
+          if (d.type === 'grid-shot') fillCell(avatar.id, d);
+          if (d.type === 'grid-done' || d.type === 'grid-error') {
+            if (d.type === 'grid-error') garmentIds.forEach((id) => fillCell(avatar.id, { garment: id, error: d.error }));
+            window.removeEventListener('message', onMsg);
+            frame.remove();
+            resolve();
+          }
+        };
+        window.addEventListener('message', onMsg);
+        frame.src = '../dressing.html?' + p.toString();
+        $('#frames').appendChild(frame);
+      });
+    }
+
+    function fillCell(avatarId, d) {
+      const td = document.getElementById(`c-${avatarId}-${d.garment}`);
+      if (!td) return;
+      if (d.error) { td.innerHTML = `<div class="err">${d.error}</div>`; return; }
+      const verdictPart = d.verdict ? ` · ${d.verdict}` : '';
+      const scorePart = d.score != null ? ` · ${Math.round(d.score)}/100` : '';
+      td.innerHTML = `<img src="${d.image}" alt="${avatarId} wearing ${d.garment}">
+        <div class="cap">${d.size}${verdictPart}${scorePart}</div>`;
+    }
+
+    async function run() {
+      const sel = [...document.querySelectorAll('[data-a]:checked')].map((c) => avatars[+c.dataset.a]);
+      const gsel = [...document.querySelectorAll('[data-g]:checked')].map((c) => garments[+c.dataset.g]);
+      const size = document.querySelector('input[name=size]:checked').value;
+      if (!sel.length || !gsel.length) return;
+      $('#grid').innerHTML = `<tr><th>Avatar \\ Garment</th>${gsel.map((g) => `<th>${g.name || g.id}</th>`).join('')}</tr>` +
+        sel.map((a) => `<tr><th>${a.label || a.id}<div class="muted">${a.gender}, ${a.h} cm, chest ${a.chest}</div></th>` +
+          gsel.map((g) => `<td id="c-${a.id}-${g.id}"><div class="muted">waiting…</div></td>`).join('') + '</tr>').join('');
+      $('#run-btn').disabled = true;
+      for (let i = 0; i < sel.length; i++) {            // one avatar at a time (MediaPipe is heavy)
+        $('#status').textContent = `Rendering avatar ${i + 1} of ${sel.length}…`;
+        await renderOne(sel[i], gsel.map((g) => g.id), size, `${Date.now()}-${i}`);
+      }
+      $('#status').textContent = 'Done.';
+      $('#run-btn').disabled = false;
+    }
+
+    $('#run-btn').addEventListener('click', run);
+    $('#grid').addEventListener('click', (e) => {
+      if (e.target.tagName === 'IMG') { $('#lightbox img').src = e.target.src; $('#lightbox').style.display = 'flex'; }
+    });
+    $('#lightbox').addEventListener('click', () => { $('#lightbox').style.display = 'none'; });
+    loadLists();
+  </script>
+</body>
+</html>

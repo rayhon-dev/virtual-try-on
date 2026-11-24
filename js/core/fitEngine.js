@@ -127,6 +127,13 @@ export function getConfidence(ease, target, margin) {
   return distance < margin ? 'low' : 'high';
 }
 
+/** How many cm a zone is outside its target range (0 when inside). */
+export function violationOf(zone) {
+  if (zone.ease < zone.target[0]) return zone.target[0] - zone.ease;
+  if (zone.ease > zone.target[1]) return zone.ease - zone.target[1];
+  return 0;
+}
+
 /** 100 inside the range; loses points per cm outside it (tight costs more than loose). */
 export function scoreZone(ease, target, scoring) {
   const [min, max] = target;
@@ -142,7 +149,7 @@ export function scoreZone(ease, target, scoring) {
 /**
  * Full evaluation of one size.
  * Returns { size, score, zones: [ { zone, bodyValue, garmentValue, ease, target,
- *           status, confidence, score, weight } ], hasTooTight }
+ *           status, confidence, score, weight } ], hasTooTight, totalViolation }
  */
 export function evaluateSize(body, garment, sizeName, preference, rules) {
   const size = garment.sizes[sizeName];
@@ -154,6 +161,23 @@ export function evaluateSize(body, garment, sizeName, preference, rules) {
   // Object.entries(obj) = dict.items()
   for (const [zoneName, zoneRule] of Object.entries(zoneRules)) {
     const target = getTargetRange(zoneRule, preference);
+
+    // Garments without long sleeves (short, none) skip sleeve evaluation (status "n/a", weight 0)
+    // Python analogy: if zone_name == 'sleeve' and garment.get('sleeveType', 'long') != 'long':
+    const sleeveType = garment.sleeveType ?? 'long';
+    if (zoneName === 'sleeve' && sleeveType !== 'long') {
+      zones.push({ zone: zoneName, target, status: STATUS.NA, weight: 0 });
+      continue;
+    }
+
+    // Long coats/trenches (lengthStyle "long") are meant to reach the knee or calf, so comparing
+    // their length with the torso length would always say "too long". Length is a design choice
+    // there, not fit: skip the zone. Python analogy: if zone_name == 'length' and garment.get('lengthStyle') == 'long':
+    if (zoneName === 'length' && garment.lengthStyle === 'long') {
+      zones.push({ zone: zoneName, target, status: STATUS.NA, weight: 0 });
+      continue;
+    }
+
     const measured = computeEase(zoneRule, body, size);
 
     if (!measured) {
@@ -187,11 +211,29 @@ export function evaluateSize(body, garment, sizeName, preference, rules) {
   const weighted = zones.reduce((sum, z) => sum + (z.weight ? z.score * z.weight : 0), 0);
   let score = totalWeight ? Math.round(weighted / totalWeight) : 0;
 
-  // A size you physically cannot wear can never be a good recommendation.
-  const hasTooTight = zones.some((z) => z.status === STATUS.TOO_TIGHT);
-  if (hasTooTight) score = Math.min(score, rules.scoring.tooTightCap);
+  // Final score cannot exceed worst single zone score + 20
+  const activeZoneScores = zones
+    .filter((z) => z.status !== STATUS.NA && z.weight > 0 && typeof z.score === 'number')
+    .map((z) => z.score);
+  if (activeZoneScores.length > 0) {
+    const worstZoneScore = Math.min(...activeZoneScores);
+    score = Math.min(score, Math.round(worstZoneScore + 20));
+  }
 
-  return { size: sizeName, score, zones, hasTooTight };
+  // Violation = how many cm a size is outside its target ranges, added up over all zones.
+  let totalViolation = 0;
+  for (const z of zones) {
+    if (z.status !== STATUS.NA) totalViolation += violationOf(z);
+  }
+
+  // A size you physically cannot wear can never be a good recommendation: its score is capped.
+  // Inside the cap, every cm of violation costs one point, so less violation always scores higher.
+  // This score is not rounded to whole numbers (ease has 0.1 cm steps) and not clamped at 0,
+  // so even very bad sizes keep a strict order (it can be negative; the UI shows it as 0).
+  const hasTooTight = zones.some((z) => z.status === STATUS.TOO_TIGHT);
+  if (hasTooTight) score = round1(rules.scoring.tooTightCap - totalViolation);
+
+  return { size: sizeName, score, zones, hasTooTight, totalViolation: round1(totalViolation) };
 }
 
 // ---------------------------------------------------------------------------
@@ -216,28 +258,52 @@ export function getDesignFitHint(garment, preference) {
 }
 
 /**
- * Evaluate every size and pick the best one for the chosen preference.
- * Ties go to the smaller size (first in size order).
- * Returns { bestSize, best, results, verdict, hint }
+ * The zone that stops a size from fitting. A zone that is too tight blocks wearing the garment,
+ * so it comes first (even if another zone is further off); otherwise the worst zone.
+ * Returns { zone, violationCm, issue } or null.
+ */
+export function findBlockingZone(result, zoneRules) {
+  const bad = result.zones.filter((z) => z.status !== STATUS.GOOD && z.status !== STATUS.NA);
+  const tooTight = bad.filter((z) => z.status === STATUS.TOO_TIGHT);
+  const pool = tooTight.length ? tooTight : bad;
+  if (!pool.length) return null;
+  const worst = pool.reduce((a, z) => (violationOf(z) > violationOf(a) ? z : a));
+  const isLength = zoneRules?.[worst.zone]?.kind === 'length'; // sleeves / length read "short / long"
+  const tight = worst.ease < worst.target[0];
+  return {
+    zone: worst.zone,
+    violationCm: round1(violationOf(worst)),
+    issue: tight ? (isLength ? 'too short' : 'too tight') : (isLength ? 'too long' : 'too loose'),
+  };
+}
+
+/**
+ * Evaluate every size and pick the best one for the chosen preference: the highest score
+ * (a tie goes to the smaller size). A size "fits" when nothing is too tight and the score is good.
+ * Returns { bestSize, best, results, fits, blocking, verdict, hint }
+ *   blocking = the zone that stops the best size from fitting (null when it fits)
  */
 export function recommendSize(body, garment, preference, rules) {
-  // .map() = list comprehension: [evaluate(s) for s in sizes]
   const results = getSizeNames(garment).map((s) => evaluateSize(body, garment, s, preference, rules));
+  const best = results.reduce((a, r) => (r.score > a.score ? r : a)); // ties keep the smaller size
 
-  let best = results[0];
-  for (const r of results) {
-    if (r.score > best.score) best = r;
+  const fits = !best.hasTooTight && best.score >= rules.scoring.minGoodScore;
+  const blocking = fits ? null : findBlockingZone(best, getZoneRules(rules, garment.category));
+  let verdict;
+  if (fits) {
+    verdict = `${best.size} is the best size for a ${capitalize(preference)} fit.`;
+  } else if (blocking) {
+    verdict = `No size fits well. ${best.size} is closest, ${blocking.zone} ${blocking.violationCm} cm ${blocking.issue}.`;
+  } else {
+    verdict = `No size fits well. ${best.size} is closest.`;
   }
-
-  const pref = capitalize(preference);
-  const verdict = best.score >= rules.scoring.minGoodScore
-    ? `${best.size} is the best size for a ${pref} fit.`
-    : `No size fits well for a ${pref} fit — ${best.size} is the closest.`;
 
   return {
     bestSize: best.size,
     best,
     results,
+    fits,
+    blocking,
     verdict,
     hint: getDesignFitHint(garment, preference),
   };

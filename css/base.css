@@ -3,14 +3,19 @@
    ========================================================= */
 
 :root {
-  /* Palette: Tailor's Atelier */
-  --paper:       #F2F4F1; /* cool off-white */
-  --paper-2:     #E6EAE5;
-  --ink:         #14213D; /* deep navy-black */
-  --ink-soft:    #4A5670;
-  --line:        #C9D0CB; /* hairlines */
+  /* Palette: Modern Clean Virtual Try-On Studio (Eye-friendly, bright white) */
+  --paper:       #F8F9FA; /* airy, eye-friendly light studio background */
+  --paper-card:  #FFFFFF; /* pure crisp white surface */
+  --paper-2:     #F1F5F9; /* soft slate tint for secondary surfaces & tabs */
+  --ink:         #0F172A; /* modern deep obsidian slate */
+  --ink-soft:    #475569; /* refined neutral medium slate */
+  --ink-muted:   #94A3B8; /* soft subtle placeholder */
+  --line:        #E2E8F0; /* crisp, delicate modern border */
   --color-border: var(--line); /* for tests and backward compatibility */
-  --chalk:       #FF5A36; /* tailor's-chalk coral (ONE accent) */
+  --chalk:       #0F172A; /* luxury primary black accent */
+  --accent:      #0F172A;
+  --accent-blue: #2563EB;
+  --accent-green:#10B981;
 
   /* Fit status colors (semantic) */
   --fit-too-tight: #D1344B;
@@ -53,14 +58,14 @@
   --panel-w:  400px;
 }
 
-/* Dark mode values */
+/* Dark mode override disabled for consistent, eye-friendly white dressing room experience */
 @media (prefers-color-scheme: dark) {
   :root {
-    --paper:       #0F172A;
-    --paper-2:     #1E293B;
-    --ink:         #F8FAFC;
-    --ink-soft:    #94A3B8;
-    --line:        #334155;
+    --paper:       #F8F9FA;
+    --paper-2:     #F1F5F9;
+    --ink:         #0F172A;
+    --ink-soft:    #475569;
+    --line:        #E2E8F0;
   }
 }
 
@@ -152,32 +157,56 @@ a { color: inherit; text-decoration: none; }
   gap: var(--space-2);
   height: 40px;
   padding: 0 var(--space-4);
-  border-radius: var(--radius-sm);
+  border-radius: 8px;
   border: 1px solid var(--line);
-  background: var(--paper);
+  background: #FFFFFF;
+  color: var(--ink);
   font-weight: 500;
   font-size: var(--text-sm);
   cursor: pointer;
-  transition: all var(--duration) var(--ease);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
-.btn:hover { border-color: var(--ink-soft); background: var(--paper-2); }
-.btn:active { transform: translateY(1px); }
+.btn:hover {
+  border-color: #CBD5E1;
+  background: #F8FAFC;
+  color: #0F172A;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+.btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
 
 .btn-primary {
-  background: var(--chalk);
-  border-color: var(--chalk);
-  color: #ffffff;
+  background: #0F172A;
+  border-color: #0F172A;
+  color: #FFFFFF;
+  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.12), 0 1px 2px rgba(15, 23, 42, 0.08);
 }
 .btn-primary:hover {
-  background: #E84A28;
-  border-color: #E84A28;
+  background: #000000;
+  border-color: #000000;
+  color: #FFFFFF;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.16);
+}
+.btn-primary:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .btn-ghost {
-  border-color: transparent;
-  background: transparent;
+  border-color: var(--line);
+  background: #FFFFFF;
   color: var(--ink-soft);
+}
+.btn-ghost:hover {
+  border-color: #CBD5E1;
+  background: #F8FAFC;
+  color: var(--ink);
 }
 .btn-ghost:hover {
   color: var(--ink);

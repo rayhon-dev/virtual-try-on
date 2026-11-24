@@ -1,160 +1,133 @@
-# FitCheck — browser-only virtual try-on
+# Virtual Try-On (FitCheck Studio)
 
-Create an avatar from your real body measurements, then try on
-jackets from a catalog. The avatar is a realistic 3D person reshaped to your
-measurements; each garment is built from its **size chart** and dressed with its
-**product photo**, so you can see — and the app calculates — whether a size fits.
+A browser-only **2D virtual try-on** for outerwear. A user uploads a full-body photo and gets a
+standard-pose avatar. They try on catalog garments, and the app:
 
-Everything runs in the browser: no backend, no build step, no npm, no requests at
-runtime except Google Fonts.
+- recommends the **best size** (S/M/L/XL) from body vs. garment measurements in cm;
+- draws the garment on the avatar at its **real physical size**, so a size that is too small
+  *looks* too small and a size that is too big *looks* too big;
+- explains the fit per zone (chest, waist, shoulders, sleeve, length) with a verdict, a plain-language
+  recommendation, on-body fit labels and a colour fit map.
 
-## Design System
+**Key idea:** AI is used **once per user** (avatar) and **once per garment** (catalog preparation),
+never per try-on. Trying on and switching sizes run locally in the browser, instantly and for free.
 
-The visual identity is modeled after a **Tailor's Atelier / Pattern Drawing**, moving away from generic AI aesthetics towards professional tailoring tools.
+Detailed project notes (Uzbek): [`docs/loyiha-qaydlari.md`](docs/loyiha-qaydlari.md).
 
-### Design Tokens (`css/base.css`)
-- **Palette**:
-  - `--paper`: `#F2F4F1` (cool off-white background)
-  - `--paper-2`: `#E6EAE5` (surfaces / cards)
-  - `--ink`: `#14213D` (deep navy-black for primary text and elements)
-  - `--ink-soft`: `#4A5670` (muted labels and descriptions)
-  - `--line`: `#C9D0CB` (1px hairline borders)
-  - `--chalk`: `#FF5A36` (tailor's-chalk coral — the ONE accent for primary actions and focus)
-- **Semantic Fit Status Colors**:
-  - Too Tight: `#D1344B` | Tight: `#E08A1E` | Good: `#2E8B57` | Loose: `#2F6FDE` | Too Loose: `#6B4FC9`
-
-### Typography
-- **Headings & Verdict**: `"Fraunces"` (serif display) with fallback `serif`.
-- **Body Text**: `"IBM Plex Sans"` with fallback `sans-serif`.
-- **Numbers, CM values, and Tables**: `"IBM Plex Mono"` (tabular numbers) with fallback `monospace`.
-
-### Where to change them
-- All tokens, colors, and typography variables are centralized in `css/base.css`. Changing a variable there updates the entire application instantly, including dark mode variants under `@media (prefers-color-scheme: dark)`.
+---
 
 ## Run
 
-1. Open the repo folder in VS Code.
-2. Right-click `index.html` → **Open with Live Server**
-   (or run `python3 -m http.server 8000` and open http://localhost:8000).
+```bash
+python3 -m http.server 8000
+```
 
-ES modules and the 3D model files do not load from `file://`, so a local server is required.
+Open http://localhost:8000 (redirects to `dressing.html`). ES modules and MediaPipe do not load from
+`file://`, so a local server is required. While developing, keep DevTools → Network → **Disable
+cache** on (or run `npx http-server -p 8000 -c-1`), otherwise the browser may keep running old JS.
 
-| Page | What it does |
-|---|---|
-| `index.html` | Choose Female / Male, enter measurements (sliders + validation), live 3D preview, save to localStorage |
-| `studio.html` | Catalog → pick a jacket → it is put on your avatar in the recommended size; change size / fit preference; fit table + fit map. State is kept in the URL: `studio.html?id=…&size=…&fit=…` |
-| `tests/fitEngine.test.html` | 19 unit tests of the fit engine |
-| `tests/avatar3d.test.html` | Reshapes the 3D avatars to test bodies and re-measures them (circumference within 2 %) |
-| `tests/garment3d.test.html` | Every jacket in every size; checks the 3D chest circumference and length against the size chart |
+### Gemini API key (avatar generation)
+
+Copy `js/local-config.example.js` to `js/local-config.js` and put your Google AI Studio key there.
+`js/local-config.js` is git-ignored. **Demo only:** the key is used from the browser; before any public
+deployment it must move to a server-side proxy.
+
+---
 
 ## How it works
 
-### 1. Fit engine (`js/core/fitEngine.js`, pure functions)
+### 1. Admin adds a garment (`admin.html`, once per garment)
+1. In Gemini (Pro), the shop photo is put on the **standard mannequin** ("step A", worn reference).
+2. The worn reference is uploaded; MediaPipe Pose finds the mannequin's joints (`refPose`).
+3. **Cut garment**: the garment is cut out of the worn reference in the browser (background, head,
+   skin, the mannequin's white T-shirt and leggings are removed). Options: mannequin legs
+   black/green, neckline closed/open V, light garment. It keeps the mannequin's frame, so no manual
+   anchors or alignment are needed.
+4. Clean-up tools: Magic Eraser, Brush Eraser, Restore Brush.
+5. Garment data: category, type, design fit (fitted/regular/relaxed/oversized), sleeve type,
+   length style (regular / long coat), stretch, "AI image looks like size", size chart (cm).
+6. Saved in the browser's IndexedDB.
 
-For every zone: **ease = garment − body** (cm).
+### 2. User creates an avatar (`dressing.html`, once per user)
+1. Photo check (`photoCheck.js`) → Gemini redraws the person in a standard pose: white T-shirt,
+   black leggings, arms slightly away from the body, hair tied back, grey background, 3:4, body width
+   preserved (prompt in `js/core/avatarGen.js`) → output check (`geminiValidate.js`).
+2. MediaPipe Pose: 33 landmarks + person mask, height in pixels.
+3. Measurements: the user enters height; the others are **estimated from the photo** and must be
+   confirmed or corrected by the user.
 
-| Zone | Garment | Body |
-|---|---|---|
-| chest, waist | circumference | circumference |
-| shoulder | seam to seam | shoulder width |
-| sleeve | sleeve + (garment shoulder − body shoulder) / 2 | arm length |
-| length | shoulder point → hem | shoulder point → hip line |
+### 3. Dressing room (every try-on, no AI)
+1. **Fit engine** (`js/core/fitEngine.js`): per zone `ease = garment − body` (cm) is compared with the
+   target range of the fit preference → tooTight / tight / good / loose / tooLoose → weighted score
+   (the worst zone caps the score) → best size.
+2. **Placement**: mannequin landmarks → user landmarks at real cm scale; sleeves rotated to the user's
+   arms; sleeve length, hem and width change relative to the reference size (mild exaggeration).
+3. **Compositing**: clean plate (T-shirt/arms around the garment), hole filling, defringe, edge
+   softening, contact shadow, head redraw.
+4. **Output**: verdict badge, recommendation relative to the garment's design fit, fit labels,
+   fit map, size pills coloured by verdict. A far-too-small size is not stretched onto the body; a
+   "too small" message is shown instead.
 
-* **Target range** = `fitRules.json` range for the fit preference (Fitted / Regular / Relaxed /
-  Oversized) **+ outerwear layer allowance** (room for the T-shirt underneath). Sleeve and length
-  use one range for every preference (`"any"`).
-* **Status**: above max + tolerance → *tooLoose*; above max → *loose*; inside → *good*; below min
-  but wearable → *tight*; otherwise *tooTight*. "Wearable" uses stretch: the garment can grow to
-  `garment × (1 + stretch)`, and for width zones it must still leave the layer allowance — so a
-  negative ease is only OK if stretch covers it.
-* **Confidence** is *low* when the ease is within 2 cm (shoulders: 1 cm) of a range boundary.
-* **Score 0–100** per size: weighted zone scores (−12 points per cm too tight, −6 per cm too
-  loose); any *tooTight* zone caps the size at 30. The best score is recommended.
-* **designFit hint**: an oversized model with a Regular preference → "This model runs oversized —
-  consider one size down" (and "runs slim — consider one size up" the other way).
+---
 
-### 2. 3D avatar (`js/core/avatar3d.js`)
-
-The avatars (`assets/avatars/*.glb`) were made in **Blender + MPFB2 (MakeHuman, CC0)** — no photos
-of real people. To match your measurements every vertex is moved (no animation needed):
-
-1. The base model is **measured like a tailor would**: circumference = convex hull of a horizontal
-   slice (= what a tape measure reads), found at the chest / waist / hip.
-2. Each slice is scaled so its circumference becomes yours; the body is stretched per segment
-   (legs / torso / head) to your height and torso length; arms are lengthened along their own axis.
-3. Clothes (T-shirt, trousers, shoes) are skinned to the same skeleton, so they follow.
-
-Lengths that can't be measured on a mesh (bone joints sit inside the body) are calibrated with
-average adult proportions (`AVERAGE_RATIOS`). `tests/avatar3d.test.html` re-measures the result.
-
-### 3. Garments (`js/core/garmentRenderer.js`)
-
-**Shape from the size chart** (no 3D modelling per item):
-
-* Torso: for ~50 heights between collar and hem, the real body slice is grown outward by
-  `max(6 mm, ease / 2π)` so its circumference equals the garment's (chest / waist / hem from the
-  chart, interpolated). A size smaller than the body is drawn hugging it — and shown red.
-* Hem = shoulder point − length. Sleeves follow the bent arm (shoulder → elbow → wrist) with the
-  effective sleeve length from the fit engine's formula.
-
-**Look from one product photo**: the photo is cut out and 13 anchor points are noted (collar,
-shoulders, armpits, hem corners, cuffs, a plain patch for the back). The front of the shell is
-mapped between those anchors, the back uses the plain patch. Items without a photo are plain
-coloured shells. **Fit map** colours zones: red = tight/short, green = good, amber = borderline,
-blue = loose/long.
-
-### Circumference ↔ front width (2D fallback only)
-
-If WebGL or the GLB files are unavailable, pages fall back to the 2D SVG mannequin
-(`js/core/mannequin.js`), which converts circumference to front width with one constant:
-`CIRC_TO_FRONT_WIDTH = 0.34`.
-
-## Data
-
-* `data/garments.json` — catalog. Sizes in **cm, FULL circumferences**: if a shop gives a
-  half-chest / flat measurement, **multiply by 2**. `length` = shoulder point → hem,
-  `sleeve` = shoulder seam → cuff, `stretch` = fraction (0.15 = 15 %), `gender` = female / male /
-  unisex. The two real jackets use **estimated sample size charts**; the `SAMPLE …` items have no photo.
-* `data/fitRules.json` — target ease ranges per category → zone → preference, allowances, scoring.
-* `data/avatars.json` — which node of each GLB to show and which mesh is the skin.
-* Body (localStorage `fitcheck.body.v1`): `{ gender, measurements }`.
-
-## Adding your own garment
-
-1. Take a front photo on a plain light background.
-2. `python tools/prepare_garment.py photo.jpg assets/garments/my-jacket.png`
-   (needs `pip install pillow`; writes `my-jacket.png` + `my-jacket-texture.jpg`).
-3. Open the PNG in any image viewer, note the 13 anchor pixels (see the existing entries).
-4. Add an entry to `data/garments.json` with the shop's size chart (full circumferences!).
-5. Check it in `tests/garment3d.test.html?id=my-jacket`.
-
-## Structure
+## Project structure
 
 ```
-index.html, studio.html
-css/          base.css (design tokens), pages.css (layouts)
-data/         garments.json, fitRules.json, avatars.json
-assets/       avatars/*.glb (MakeHuman, CC0), garments/*.png|jpg
-lib/three/    Three.js r170 (MIT) — saved locally, loaded with an import map
-js/core/      storage, data, fitEngine, avatar3d, viewer3d, garmentRenderer, mannequin (2D fallback)
-js/ui/        avatarStage, catalogPanel, sizePanel, resultsPanel
-js/pages/     avatar.js, studio.js
-tests/        fitEngine / avatar3d / garment3d test pages
-tools/        prepare_garment.py (one-time photo preparation)
+index.html            redirect to dressing.html
+dressing.html         avatar creation + dressing room
+admin.html            add garments (cut, size chart, save)
+css/                  base.css (tokens), pages.css (layout), dressing.css, admin.css
+js/pages/dressing.js  dressing room logic (placement, compositing, fit UI, grid mode)
+js/pages/admin.js     admin logic (reference pose, cut garment, brushes, save)
+js/core/fitEngine.js  size/fit calculation
+js/core/avatarGen.js  Gemini avatar generation + prompt
+js/core/geminiValidate.js, photoCheck.js   input/output checks
+js/core/garmentImage.js   background removal, Magic Eraser
+js/core/garmentStore.js   garments in IndexedDB
+js/core/storage.js        body measurements (fields, validation, localStorage)
+js/core/data.js           JSON loading
+js/ui/catalogPanel.js     catalog helpers
+data/fitRules.json        fit rules (zones, target ranges, penalties)
+data/garments.json        built-in catalog
+data/defaultCharts.json   size chart templates for the admin
+lib/mediapipe/            MediaPipe Tasks Vision + pose model (local)
+assets/garments/          built-in garment images
+docs/                     project notes
+tests/                    fitEngine tests, photo check test, visual try-on grid
 ```
+
+Storage: garments → IndexedDB `vto-garments`; avatar → IndexedDB `FitCheckDressingDB`;
+measurements → localStorage `fitcheck.body.v1`. Everything stays in the current browser.
+
+---
+
+## Tests
+
+- `tests/fitEngine.test.html`: 32 fit engine cases (also runnable with Node via `runAll`).
+- `tests/photoCheck.test.html`: photo validation.
+- `tests/tryon-grid.html`: **visual test grid**. It renders every test avatar (7 body types in
+  `tests/fixtures/avatars/`) × every garment in one table, in Best/S/M/L/XL, with optional fit map.
+  It is read-only (`dressing.html?grid=1` never saves). Use it after every visual change.
+
+---
+
+## Why 2D "template fit" (and not 3D or per-try-on AI)
+
+- **3D (tried first, Three.js):** looked unrealistic; real 3D garments need the brand's 3D pattern
+  files, which most shops do not have.
+- **2D warping of flat product photos (tried second):** looked pasted on, sleeves did not follow the
+  arms, every garment needed manual anchor points.
+- **AI image per try-on:** realistic but expensive and slow, and it does not show size differences.
+- **Template fit (current):** works with any shop photo + size chart, AI only once per user/garment,
+  realistic photo-based avatar, size differences visible in the picture and in the numbers.
 
 ## Limitations
 
-* Garments are smooth shells: no cloth simulation, wrinkles come from the photo.
-* One front photo: the back and sides of a garment are a plain patch of the same material.
-* The fit engine compares numbers; real fit also depends on fabric, cut and posture.
-* The female GLB still contains MakeHuman helper geometry in a hidden mesh (≈65 MB);
-  re-exporting with *Export copy* would make it lighter.
-* Product photos in `assets/garments/` are for this private demo only.
+2D does not re-simulate folds for each body; results depend on a standard-pose avatar; demo size
+charts are estimated (except one real garment); women's outerwear only for now; data is per browser
+(no server); the API key is client-side (demo only); user photos are sent to Google.
 
 ## Roadmap
 
-* Tops and bottoms (T-shirts, trousers: same shell idea on the legs).
-* Several photos per garment (front + back) for 360° looks.
-* Real garment 3D models (glTF) for hero items; cloth simulation.
-* Camera body measurement with MediaPipe Pose.
+Server catalog + API proxy + privacy controls → men's mannequin → automated garment preparation in
+the admin → multiple garments at once → mobile UI → bottoms → shop widget / marketplace integration.

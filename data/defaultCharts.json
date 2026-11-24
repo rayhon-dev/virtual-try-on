@@ -1,0 +1,215 @@
+{
+  "_note": "Default size chart templates. Values in cm. S, M, L, XL with fields: chest, waist, shoulder, sleeve, length, hem. sizeChart is 'estimated'.",
+  "templates": {
+    "female_t-shirt": {
+      "name": "Women's T-Shirt",
+      "gender": "female",
+      "category": "tops",
+      "type": "t-shirt",
+      "designFit": "regular",
+      "stretch": 0.05,
+      "sleeveType": "short",
+      "sizes": {
+        "S": { "chest": 86, "waist": 80, "shoulder": 37.5, "sleeve": 0, "length": 58, "hem": 86 },
+        "M": { "chest": 92, "waist": 86, "shoulder": 39, "sleeve": 0, "length": 60, "hem": 92 },
+        "L": { "chest": 98, "waist": 92, "shoulder": 40.5, "sleeve": 0, "length": 62, "hem": 98 },
+        "XL": { "chest": 104, "waist": 98, "shoulder": 42, "sleeve": 0, "length": 64, "hem": 104 }
+      }
+    },
+    "female_sweater": {
+      "name": "Women's Knit Sweater",
+      "gender": "female",
+      "category": "tops",
+      "type": "sweater",
+      "designFit": "relaxed",
+      "stretch": 0.10,
+      "sleeveType": "long",
+      "sizes": {
+        "S": { "chest": 94, "waist": 90, "shoulder": 40, "sleeve": 59, "length": 56, "hem": 80 },
+        "M": { "chest": 100, "waist": 96, "shoulder": 41.5, "sleeve": 60, "length": 58, "hem": 86 },
+        "L": { "chest": 106, "waist": 102, "shoulder": 43, "sleeve": 61, "length": 60, "hem": 92 },
+        "XL": { "chest": 112, "waist": 108, "shoulder": 44.5, "sleeve": 62, "length": 62, "hem": 98 }
+      }
+    },
+    "female_cardigan": {
+      "name": "Women's Cardigan",
+      "gender": "female",
+      "category": "tops",
+      "type": "cardigan",
+      "designFit": "regular",
+      "stretch": 0.05,
+      "sleeveType": "long",
+      "sizes": {
+        "S": { "chest": 88, "waist": 80, "shoulder": 38, "sleeve": 58, "length": 60, "hem": 88 },
+        "M": { "chest": 93, "waist": 84, "shoulder": 39.5, "sleeve": 59, "length": 62, "hem": 94 },
+        "L": { "chest": 100, "waist": 92, "shoulder": 41, "sleeve": 60, "length": 64, "hem": 100 },
+        "XL": { "chest": 106, "waist": 98, "shoulder": 42.5, "sleeve": 61, "length": 66, "hem": 106 }
+      }
+    },
+    "female_shirt": {
+      "name": "Women's Shirt",
+      "gender": "female",
+      "category": "tops",
+      "type": "shirt",
+      "designFit": "regular",
+      "stretch": 0.05,
+      "sleeveType": "long",
+      "sizes": {
+        "S": { "chest": 88, "waist": 80, "shoulder": 38, "sleeve": 58, "length": 60, "hem": 88 },
+        "M": { "chest": 93, "waist": 84, "shoulder": 39.5, "sleeve": 59, "length": 62, "hem": 94 },
+        "L": { "chest": 100, "waist": 92, "shoulder": 41, "sleeve": 60, "length": 64, "hem": 100 },
+        "XL": { "chest": 106, "waist": 98, "shoulder": 42.5, "sleeve": 61, "length": 66, "hem": 106 }
+      }
+    },
+    "female_hoodie": {
+      "name": "Women's Hoodie",
+      "gender": "female",
+      "category": "tops",
+      "type": "hoodie",
+      "designFit": "relaxed",
+      "stretch": 0.05,
+      "sleeveType": "long",
+      "sizes": {
+        "S": { "chest": 96, "waist": 90, "shoulder": 39.5, "sleeve": 59, "length": 58, "hem": 86 },
+        "M": { "chest": 102, "waist": 96, "shoulder": 41, "sleeve": 60, "length": 60, "hem": 92 },
+        "L": { "chest": 108, "waist": 102, "shoulder": 42.5, "sleeve": 61, "length": 62, "hem": 98 },
+        "XL": { "chest": 114, "waist": 108, "shoulder": 44, "sleeve": 62, "length": 64, "hem": 104 }
+      }
+    },
+    "female_jacket": {
+      "name": "Women's Jacket / Coat",
+      "gender": "female",
+      "category": "outerwear",
+      "type": "jacket",
+      "designFit": "regular",
+      "stretch": 0.02,
+      "sleeveType": "long",
+      "sizes": {
+        "S": { "chest": 96, "waist": 90, "shoulder": 38.5, "sleeve": 59, "length": 50, "hem": 90 },
+        "M": { "chest": 102, "waist": 96, "shoulder": 40, "sleeve": 60, "length": 51.5, "hem": 96 },
+        "L": { "chest": 108, "waist": 102, "shoulder": 41.5, "sleeve": 61, "length": 53, "hem": 102 },
+        "XL": { "chest": 114, "waist": 108, "shoulder": 43, "sleeve": 62, "length": 54.5, "hem": 108 }
+      }
+    },
+    "female_coat": {
+      "name": "Women's Coat",
+      "gender": "female",
+      "category": "outerwear",
+      "type": "coat",
+      "designFit": "regular",
+      "stretch": 0.02,
+      "sleeveType": "long",
+      "sizes": {
+        "S": { "chest": 96, "waist": 90, "shoulder": 38.5, "sleeve": 59, "length": 50, "hem": 90 },
+        "M": { "chest": 102, "waist": 96, "shoulder": 40, "sleeve": 60, "length": 51.5, "hem": 96 },
+        "L": { "chest": 108, "waist": 102, "shoulder": 41.5, "sleeve": 61, "length": 53, "hem": 102 },
+        "XL": { "chest": 114, "waist": 108, "shoulder": 43, "sleeve": 62, "length": 54.5, "hem": 108 }
+      }
+    },
+    "male_t-shirt": {
+      "name": "Men's T-Shirt",
+      "gender": "male",
+      "category": "tops",
+      "type": "t-shirt",
+      "designFit": "regular",
+      "stretch": 0.05,
+      "sleeveType": "short",
+      "sizes": {
+        "S": { "chest": 98, "waist": 92, "shoulder": 43.5, "sleeve": 0, "length": 68, "hem": 98 },
+        "M": { "chest": 104, "waist": 98, "shoulder": 45, "sleeve": 0, "length": 70, "hem": 104 },
+        "L": { "chest": 110, "waist": 104, "shoulder": 46.5, "sleeve": 0, "length": 72, "hem": 110 },
+        "XL": { "chest": 116, "waist": 110, "shoulder": 48, "sleeve": 0, "length": 74, "hem": 116 }
+      }
+    },
+    "male_sweater": {
+      "name": "Men's Sweater",
+      "gender": "male",
+      "category": "tops",
+      "type": "sweater",
+      "designFit": "relaxed",
+      "stretch": 0.10,
+      "sleeveType": "long",
+      "sizes": {
+        "S": { "chest": 108, "waist": 104, "shoulder": 45, "sleeve": 63, "length": 64, "hem": 90 },
+        "M": { "chest": 114, "waist": 110, "shoulder": 46.5, "sleeve": 64, "length": 66, "hem": 96 },
+        "L": { "chest": 120, "waist": 116, "shoulder": 48, "sleeve": 65, "length": 68, "hem": 102 },
+        "XL": { "chest": 126, "waist": 122, "shoulder": 49.5, "sleeve": 66, "length": 70, "hem": 108 }
+      }
+    },
+    "male_shirt": {
+      "name": "Men's Shirt",
+      "gender": "male",
+      "category": "tops",
+      "type": "shirt",
+      "designFit": "regular",
+      "stretch": 0.03,
+      "sleeveType": "long",
+      "sizes": {
+        "S": { "chest": 104, "waist": 100, "shoulder": 44, "sleeve": 62, "length": 70, "hem": 102 },
+        "M": { "chest": 110, "waist": 106, "shoulder": 45.5, "sleeve": 63, "length": 72, "hem": 108 },
+        "L": { "chest": 116, "waist": 112, "shoulder": 47, "sleeve": 64, "length": 74, "hem": 114 },
+        "XL": { "chest": 122, "waist": 118, "shoulder": 48.5, "sleeve": 65, "length": 76, "hem": 120 }
+      }
+    },
+    "male_cardigan": {
+      "name": "Men's Cardigan",
+      "gender": "male",
+      "category": "tops",
+      "type": "cardigan",
+      "designFit": "regular",
+      "stretch": 0.05,
+      "sleeveType": "long",
+      "sizes": {
+        "S": { "chest": 104, "waist": 100, "shoulder": 44, "sleeve": 62, "length": 70, "hem": 102 },
+        "M": { "chest": 110, "waist": 106, "shoulder": 45.5, "sleeve": 63, "length": 72, "hem": 108 },
+        "L": { "chest": 116, "waist": 112, "shoulder": 47, "sleeve": 64, "length": 74, "hem": 114 },
+        "XL": { "chest": 122, "waist": 118, "shoulder": 48.5, "sleeve": 65, "length": 76, "hem": 120 }
+      }
+    },
+    "male_hoodie": {
+      "name": "Men's Hoodie",
+      "gender": "male",
+      "category": "tops",
+      "type": "hoodie",
+      "designFit": "relaxed",
+      "stretch": 0.05,
+      "sleeveType": "long",
+      "sizes": {
+        "S": { "chest": 108, "waist": 104, "shoulder": 45, "sleeve": 63, "length": 66, "hem": 94 },
+        "M": { "chest": 114, "waist": 110, "shoulder": 46.5, "sleeve": 64, "length": 68, "hem": 100 },
+        "L": { "chest": 120, "waist": 116, "shoulder": 48, "sleeve": 65, "length": 70, "hem": 106 },
+        "XL": { "chest": 126, "waist": 122, "shoulder": 49.5, "sleeve": 66, "length": 72, "hem": 112 }
+      }
+    },
+    "male_jacket": {
+      "name": "Men's Jacket / Coat",
+      "gender": "male",
+      "category": "outerwear",
+      "type": "jacket",
+      "designFit": "regular",
+      "stretch": 0.01,
+      "sleeveType": "long",
+      "sizes": {
+        "S": { "chest": 104, "waist": 98, "shoulder": 43.5, "sleeve": 61.5, "length": 60, "hem": 96 },
+        "M": { "chest": 110, "waist": 104, "shoulder": 45.5, "sleeve": 63, "length": 62, "hem": 102 },
+        "L": { "chest": 116, "waist": 110, "shoulder": 47.5, "sleeve": 64.5, "length": 64, "hem": 108 },
+        "XL": { "chest": 122, "waist": 116, "shoulder": 49.5, "sleeve": 66, "length": 66, "hem": 114 }
+      }
+    },
+    "male_coat": {
+      "name": "Men's Coat",
+      "gender": "male",
+      "category": "outerwear",
+      "type": "coat",
+      "designFit": "regular",
+      "stretch": 0.01,
+      "sleeveType": "long",
+      "sizes": {
+        "S": { "chest": 104, "waist": 98, "shoulder": 43.5, "sleeve": 61.5, "length": 60, "hem": 96 },
+        "M": { "chest": 110, "waist": 104, "shoulder": 45.5, "sleeve": 63, "length": 62, "hem": 102 },
+        "L": { "chest": 116, "waist": 110, "shoulder": 47.5, "sleeve": 64.5, "length": 64, "hem": 108 },
+        "XL": { "chest": 122, "waist": 116, "shoulder": 49.5, "sleeve": 66, "length": 66, "hem": 114 }
+      }
+    }
+  }
+}
