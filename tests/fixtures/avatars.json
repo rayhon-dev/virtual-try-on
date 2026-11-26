@@ -1,12 +1,12 @@
 {
-  "_note": "Test avatars for tests/tryon-grid.html. 'image' is relative to dressing.html (project root). 'current' = the avatar saved in this browser (read-only) = the reference mannequin baseline. Measurements in cm are the INTENDED values from the Gemini prompts (fictional people).",
+  "_note": "Test avatars for tests/tryon-grid.html. 'image' is relative to dressing.html. 'current' = the avatar saved in this browser (read-only). Measurements (cm) were ESTIMATED FROM EACH PHOTO with the app's own estimator (estimateMeasurementsFromPhoto) using the height 'h'; correct any value here if it looks wrong. Delete a value to have it estimated again from the photo on every run.",
   "avatars": [
-    { "id": "current", "label": "Mannequin (current, baseline)", "image": "current", "gender": "female", "h": 168, "chest": 85, "waist": 72, "hip": 90, "shoulder": 39 },
-    { "id": "plus-female", "label": "Plus-size female", "image": "tests/fixtures/avatars/plus-female.webp", "gender": "female", "h": 165, "chest": 112, "waist": 100, "hip": 118, "shoulder": 42 },
-    { "id": "petite-female", "label": "Petite female", "image": "tests/fixtures/avatars/petite-female.webp", "gender": "female", "h": 152, "chest": 80, "waist": 64, "hip": 86, "shoulder": 36 },
-    { "id": "tall-female", "label": "Tall slim female", "image": "tests/fixtures/avatars/tall-female.webp", "gender": "female", "h": 182, "chest": 86, "waist": 68, "hip": 92, "shoulder": 40 },
-    { "id": "curvy-female", "label": "Curvy (pear) female", "image": "tests/fixtures/avatars/curvy-female.webp", "gender": "female", "h": 166, "chest": 90, "waist": 72, "hip": 108, "shoulder": 38 },
-    { "id": "avg-male", "label": "Average male", "image": "tests/fixtures/avatars/avg-male.webp", "gender": "male", "h": 178, "chest": 98, "waist": 84, "hip": 98, "shoulder": 46 },
-    { "id": "plus-male", "label": "Plus-size male", "image": "tests/fixtures/avatars/plus-male.webp", "gender": "male", "h": 175, "chest": 118, "waist": 112, "hip": 114, "shoulder": 49 }
+    { "id": "current", "label": "Current avatar (this browser)", "image": "current", "gender": "female", "h": 165 },
+    { "id": "plus-female", "label": "Plus-size female", "image": "tests/fixtures/avatars/plus-female.webp", "gender": "female", "h": 165, "chest": 96, "waist": 72.5, "hip": 101.5, "shoulder": 41.5, "armLength": 56, "torsoLength": 51 },
+    { "id": "petite-female", "label": "Petite female", "image": "tests/fixtures/avatars/petite-female.webp", "gender": "female", "h": 152, "chest": 82, "waist": 62, "hip": 87, "shoulder": 35.5, "armLength": 51.5, "torsoLength": 46 },
+    { "id": "tall-female", "label": "Tall slim female", "image": "tests/fixtures/avatars/tall-female.webp", "gender": "female", "h": 182, "chest": 95, "waist": 72, "hip": 100.5, "shoulder": 41.5, "armLength": 61, "torsoLength": 54 },
+    { "id": "curvy-female", "label": "Curvy (pear) female", "image": "tests/fixtures/avatars/curvy-female.webp", "gender": "female", "h": 166, "chest": 87.5, "waist": 66.5, "hip": 92.5, "shoulder": 38, "armLength": 56, "torsoLength": 51 },
+    { "id": "avg-male", "label": "Average male", "image": "tests/fixtures/avatars/avg-male.webp", "gender": "male", "h": 178, "chest": 101, "waist": 90, "hip": 99, "shoulder": 43.5, "armLength": 60, "torsoLength": 55.5 },
+    { "id": "plus-male", "label": "Plus-size male", "image": "tests/fixtures/avatars/plus-male.webp", "gender": "male", "h": 175, "chest": 119.5, "waist": 108, "hip": 109.5, "shoulder": 49.5, "armLength": 59.5, "torsoLength": 56.5 }
   ]
 }

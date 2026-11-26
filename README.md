@@ -12,7 +12,6 @@ standard-pose avatar. They try on catalog garments, and the app:
 **Key idea:** AI is used **once per user** (avatar) and **once per garment** (catalog preparation),
 never per try-on. Trying on and switching sizes run locally in the browser, instantly and for free.
 
-Detailed project notes (Uzbek): [`docs/loyiha-qaydlari.md`](docs/loyiha-qaydlari.md).
 
 ---
 
@@ -92,7 +91,7 @@ data/garments.json        built-in catalog
 data/defaultCharts.json   size chart templates for the admin
 lib/mediapipe/            MediaPipe Tasks Vision + pose model (local)
 assets/garments/          built-in garment images
-docs/                     project notes
+docs/                     personal notes (local only, git-ignored)
 tests/                    fitEngine tests, photo check test, visual try-on grid
 ```
 

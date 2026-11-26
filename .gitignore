@@ -1,3 +1,6 @@
 .env
 js/local-config.js
 assets/avatars2d/
+
+# Personal notes (kept locally, not on GitHub)
+docs/

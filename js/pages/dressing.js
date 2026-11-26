@@ -183,9 +183,12 @@ function getFitVerdictAndRecommendation(size, garment, evalRes, rec, pref) {
   const chest = zones.find(z => z.zone === 'chest');
   const waist = zones.find(z => z.zone === 'waist');
 
-  const tooTightZones = zones.filter(z => z.status === 'tooTight');
+  // Badge is decided by the BODY zones; sleeve/length only add notes in the sentence
+  // (browser check: "Too big" badge while chest and shoulders were tight, because sleeves were long).
+  const TORSO = ['chest', 'waist', 'shoulder', 'hip', 'hips'];
+  const tooTightZones = zones.filter(z => z.status === 'tooTight' && TORSO.includes(z.zone));
   const tightZones    = zones.filter(z => z.status === 'tight');
-  const tooLooseZones = zones.filter(z => z.status === 'tooLoose');
+  const tooLooseZones = zones.filter(z => z.status === 'tooLoose' && TORSO.includes(z.zone));
   const looseZones    = zones.filter(z => z.status === 'loose');
   const goodZones     = zones.filter(z => z.status === 'good');
 
@@ -360,6 +363,15 @@ async function runGridMode() {
       const dataUrl = await new Promise((res) => { const r = new FileReader(); r.onload = () => res(r.result); r.readAsDataURL(blob); });
       await processAndStoreAvatar(dataUrl, m.height); // saveAvatarToDb is a no-op in grid mode
     }
+
+    // Measurements: values given in the URL win; every missing one is estimated from THIS photo
+    // (same estimator the user sees after uploading), so picture and numbers describe the same body.
+    const est = estimateMeasurementsFromPhoto(state.avatar, m.height, gender);
+    for (const k of ['chest', 'waist', 'hip', 'shoulder', 'armLength', 'torsoLength']) {
+      const given = parseFloat(q.get(k));
+      if (!(given > 0) && est.values[k] > 0) m[k] = est.values[k];
+    }
+    post({ type: 'grid-measurements', measurements: { ...m } });
 
     const canvas = document.getElementById('avatar-canvas');
     const wanted = (q.get('garments') || '').split(',').filter(Boolean);
@@ -762,43 +774,28 @@ function setupEventListeners() {
     });
   }
 
-  // Phase 5: Realistic compositing toggle (default ON)
-  let realisticCompToggle = document.getElementById('realistic-compositing-toggle');
-  if (!realisticCompToggle) {
+  // Phase 11: Realistic compositing is ALWAYS on
+  state.realisticCompositing = true;
+
+  // Phase 10 & 11: Fit labels switch on stage toolbar (default ON)
+  let fitLabelsToggle = document.getElementById('fit-labels-toggle');
+  if (!fitLabelsToggle) {
     const stageFig = document.querySelector('.stage-figure') || document.querySelector('.dressing-stage');
     if (stageFig) {
       const bar = document.createElement('div');
       bar.className = 'stage-toolbar';
       bar.id = 'stage-toolbar';
-      bar.style.cssText = 'position:absolute; top:16px; right:16px; display:flex; align-items:center; gap:8px; background:rgba(255,255,255,0.92); backdrop-filter:blur(8px); padding:6px 14px; border-radius:999px; box-shadow:0 4px 14px rgba(0,0,0,0.08); font-size:0.75rem; font-weight:600; color:var(--ink-dark); z-index:10;';
       bar.innerHTML = `
-        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; margin:0;">
-          <input type="checkbox" id="realistic-compositing-toggle" checked style="cursor:pointer; accent-color:var(--accent);">
-          <span>Realistic compositing</span>
-        </label>
-        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; margin:0;">
+        <label class="fit-labels-switch" style="display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; margin:0;">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.75"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="18" r="2"/></svg>
           <input type="checkbox" id="fit-labels-toggle" checked style="cursor:pointer; accent-color:var(--accent);">
           <span>Fit labels</span>
         </label>
-        <label style="display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; margin:0;">
-          <input type="checkbox" id="fit-map-toggle" style="cursor:pointer; accent-color:var(--accent);">
-          <span>Fit map</span>
-        </label>
       `;
       stageFig.appendChild(bar);
-      realisticCompToggle = document.getElementById('realistic-compositing-toggle');
+      fitLabelsToggle = document.getElementById('fit-labels-toggle');
     }
   }
-  if (realisticCompToggle) {
-    state.realisticCompositing = realisticCompToggle.checked;
-    realisticCompToggle.addEventListener('change', (e) => {
-      state.realisticCompositing = e.target.checked;
-      renderStage();
-    });
-  }
-
-  // Phase 10: Fit labels toggle (default ON; independent from Fit map)
-  const fitLabelsToggle = document.getElementById('fit-labels-toggle');
   if (fitLabelsToggle) {
     fitLabelsToggle.checked = Boolean(state.fitLabels);
     fitLabelsToggle.addEventListener('change', (e) => {
@@ -807,8 +804,8 @@ function setupEventListeners() {
     });
   }
 
-  // Phase 9C: Fit map toggle
-  let fitMapToggle = document.getElementById('fit-map-toggle');
+  // Phase 9C: Support fit map toggle if present (e.g. tryon-grid / test mode)
+  const fitMapToggle = document.getElementById('fit-map-toggle');
   const fitMapLegend = document.getElementById('fit-map-legend');
   if (fitMapToggle) {
     fitMapToggle.checked = Boolean(state.fitMap);
@@ -1195,7 +1192,9 @@ function estimateMeasurementsFromPhoto(avatar, heightCm, gender) {
   out.values.hip = r1(ellipse(hipW, 0.75));
   // Landmarks are joint centres; the tape starts at the bony shoulder tip (~3 cm further out/up).
   const armPx = (dist(P(11), P(13)) + dist(P(13), P(15)) + dist(P(12), P(14)) + dist(P(14), P(16))) / 2;
-  if (armPx) out.values.armLength = r1(armPx / pxPerCm + 3);
+  // Joint centres underestimate a tape measurement (shoulder tip -> wrist bone, slightly bent arm).
+  // Blend with the typical ratio arm ≈ 0.35 x height (check: 52 cm was estimated at 165 cm, tape gave 59).
+  if (armPx) out.values.armLength = r1(0.5 * (armPx / pxPerCm + 5) + 0.5 * (0.35 * heightCm));
   const sh = P(11) && P(12) ? { x: (P(11).x + P(12).x) / 2, y: (P(11).y + P(12).y) / 2 } : null;
   const hp = P(23) && P(24) ? { x: (P(23).x + P(24).x) / 2, y: (P(23).y + P(24).y) / 2 } : null;
   if (sh && hp) out.values.torsoLength = r1(dist(sh, hp) / pxPerCm + 4);
@@ -1379,36 +1378,33 @@ function handleSaveMeasurements() {
 
 // Update the Ready state UI with current stats
 function updateReadyUI() {
-  const heightEl = document.getElementById('readout-height');
-  const scaleEl = document.getElementById('readout-scale');
-  const shoulderEl = document.getElementById('readout-shoulder');
+  const summaryHeightEl = document.getElementById('summary-height') || document.getElementById('readout-height');
   const measContainer = document.getElementById('readout-measurements');
+  const body = loadBody();
 
-  if (state.avatar) {
-    if (heightEl) {
-      const body = loadBody();
-      heightEl.textContent = body ? `${body.measurements.height} cm` : `${state.avatar.imageHeightPx || '--'}px`;
-    }
-    if (scaleEl) {
-      const approxTag = state.avatar.scaleApproximate ? ' (approx)' : '';
-      scaleEl.textContent = state.avatar.pxPerCm ? `${state.avatar.pxPerCm.toFixed(1)}${approxTag}` : '--';
-    }
-    if (shoulderEl) shoulderEl.textContent = state.avatar.shoulderCm ? `${state.avatar.shoulderCm.toFixed(1)} cm` : '--';
+  if (summaryHeightEl) {
+    const h = body?.measurements?.height || state.avatar?.height;
+    summaryHeightEl.innerHTML = `Height: <strong>${h ? `${Math.round(h)} cm` : '--'}</strong>`;
   }
 
-  // Show key measurements
+  // Show 4 main measurements (chest, waist, hip, shoulder)
   if (measContainer) {
-    const body = loadBody();
-    if (body) {
+    if (body && body.measurements) {
       const m = body.measurements;
-      const parts = [];
-      if (m.chest) parts.push(`<span>Chest: ${m.chest}</span>`);
-      if (m.waist) parts.push(`<span>Waist: ${m.waist}</span>`);
-      if (m.hip) parts.push(`<span>Hip: ${m.hip}</span>`);
-      if (m.shoulder) parts.push(`<span>Shoulder: ${m.shoulder}</span>`);
-      measContainer.innerHTML = parts.join('');
+      const items = [
+        { label: 'Chest', val: m.chest },
+        { label: 'Waist', val: m.waist },
+        { label: 'Hip', val: m.hip },
+        { label: 'Shoulder', val: m.shoulder }
+      ];
+      measContainer.innerHTML = items.map(it => `
+        <span class="meas-chip">
+          <span class="meas-chip-label">${it.label}</span>
+          <span class="meas-chip-val">${it.val ? `${Math.round(it.val)} cm` : '--'}</span>
+        </span>
+      `).join('');
     } else {
-      measContainer.innerHTML = '<span class="muted">No measurements saved</span>';
+      measContainer.innerHTML = '<span class="muted text-xs">No measurements saved</span>';
     }
   }
 }
@@ -1976,19 +1972,14 @@ function renderCatalog() {
   }
 
   displayItems.forEach(item => {
-    const isWorn = !!state.wornItems.find(w => w.garment.id === item.id);
+    const isWorn = Boolean(state.wornItems.find(w => w.garment.id === item.id));
     const card = document.createElement('div');
     card.className = `catalog-card ${isWorn ? 'is-active' : ''}`;
-    const realCategory = getGarmentCategory(item);
-    const categoryLabel = realCategory.toUpperCase();
-    const isEst = isEstimated(item);
 
     card.innerHTML = `
       <div class="catalog-card-media">
         <img src="${item.image}" class="catalog-card-img" alt="${item.name}">
-        <span class="catalog-card-tag">${categoryLabel}</span>
-        ${isEst ? '<span class="chart-tag" style="position:absolute;top:8px;right:8px" title="The size chart of this item is estimated">Estimated chart</span>' : ''}
-        ${isWorn ? '<span class="catalog-card-worn-badge">✓ Draped</span>' : '<span class="catalog-card-action">Try On</span>'}
+        ${isWorn ? '<span class="catalog-card-worn-badge">✓ Wearing</span>' : ''}
       </div>
       <div class="catalog-card-meta">
         <span class="catalog-card-title">${item.name}</span>
@@ -2000,12 +1991,11 @@ function renderCatalog() {
 }
 
 function toggleGarment(item) {
-  const itemCategory = getGarmentCategory(item);
-  const existingSameItemIndex = state.wornItems.findIndex(w => w.garment.id === item.id);
+  const isCurrentlyWorn = state.wornItems.some(w => w.garment.id === item.id);
 
-  if (existingSameItemIndex !== -1) {
-    // Clicking the same item removes it (toggle off)
-    state.wornItems.splice(existingSameItemIndex, 1);
+  if (isCurrentlyWorn) {
+    // Clicking the worn garment again removes it (toggle off)
+    state.wornItems = [];
   } else {
     // Determine default size from recommendSize if rules and body available
     const body = loadBody();
@@ -2019,29 +2009,12 @@ function toggleGarment(item) {
       } catch (_) {}
     }
 
-    // Slot behavior: Only one item per category/slot can be worn at a time.
-    const sameSlotIndex = state.wornItems.findIndex(
-      w => getGarmentCategory(w.garment) === itemCategory
-    );
-
-    if (sameSlotIndex !== -1) {
-      state.wornItems[sameSlotIndex] = { garment: item, size: chosenSize, preference: pref };
-    } else {
-      state.wornItems.push({ garment: item, size: chosenSize, preference: pref });
-    }
+    // Single garment at a time: wearing any garment REPLACES the current one
+    state.wornItems = [{ garment: item, size: chosenSize, preference: pref }];
   }
-
-  // Enforce slot draw order: bottoms (1) -> tops (2) -> outerwear (3)
-  const SLOT_ORDER = { 'bottoms': 1, 'tops': 2, 'outerwear': 3 };
-  state.wornItems.sort((a, b) => {
-    const catA = getGarmentCategory(a.garment);
-    const catB = getGarmentCategory(b.garment);
-    return (SLOT_ORDER[catA] || 99) - (SLOT_ORDER[catB] || 99);
-  });
 
   renderCatalog();
   updateWornItemsUI();
-  updateSizePills();
   updateFitResultUI();
   renderStage();
 }
@@ -2057,8 +2030,7 @@ function updateWornItemsUI() {
         <svg class="empty-rack-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
           <path d="M16 11V7a4 4 0 0 0-8 0v4M5 9h14l1 12H4L5 9z"/>
         </svg>
-        <span class="empty-rack-title">No garments on rack</span>
-        <span class="text-xs muted">Click items from the collection to try them on</span>
+        <span class="empty-rack-title">Pick an item from the wardrobe</span>
       </div>
     `;
     takeOffBtn.disabled = true;
@@ -2068,36 +2040,34 @@ function updateWornItemsUI() {
 
   takeOffBtn.disabled = false;
   list.innerHTML = '';
-  state.wornItems.forEach((item, index) => {
-    const row = document.createElement('div');
-    row.className = 'worn-item-row';
-    const categoryLabel = getGarmentCategory(item.garment).toUpperCase();
-    row.innerHTML = `
-      <div class="worn-item-info">
-        <img src="${item.garment.image}" class="worn-item-thumb" alt="${item.garment.name}">
-        <div class="worn-item-details">
-          <span class="worn-item-name">${item.garment.name}</span>
-          <span class="worn-item-category">${categoryLabel} · Size ${item.size}</span>
-        </div>
+  const item = state.wornItems[0];
+  const row = document.createElement('div');
+  row.className = 'worn-item-row';
+  const categoryLabel = getGarmentCategory(item.garment).toUpperCase();
+  row.innerHTML = `
+    <div class="worn-item-info">
+      <img src="${item.garment.image}" class="worn-item-thumb" alt="${item.garment.name}">
+      <div class="worn-item-details">
+        <span class="worn-item-name">${item.garment.name}</span>
+        <span class="worn-item-category">${categoryLabel} · Size ${item.size}</span>
       </div>
-      <button type="button" class="remove-btn" title="Remove piece">✕</button>
-    `;
-    row.querySelector('.remove-btn').addEventListener('click', () => {
-      state.wornItems.splice(index, 1);
-      updateWornItemsUI();
-      updateSizePills();
-      updateFitResultUI();
-      renderCatalog();
-      renderStage();
-    });
-    list.appendChild(row);
+    </div>
+    <button type="button" class="remove-btn" title="Remove piece">✕</button>
+  `;
+  row.querySelector('.remove-btn').addEventListener('click', () => {
+    state.wornItems = [];
+    updateWornItemsUI();
+    updateFitResultUI();
+    renderCatalog();
+    renderStage();
   });
+  list.appendChild(row);
 }
 
 function updateSizePills() {
   const container = document.getElementById('size-pills');
   if (!container) return;
-  const activeWorn = state.wornItems[state.wornItems.length - 1];
+  const activeWorn = state.wornItems[0];
 
   if (!activeWorn) {
     container.hidden = true;
@@ -2169,7 +2139,6 @@ function updateSizePills() {
 
     btn.onclick = () => {
       activeWorn.size = s;
-      updateSizePills();
       updateFitResultUI();
       renderStage();
     };
@@ -2178,12 +2147,12 @@ function updateSizePills() {
   });
 }
 
-// Renders the fit evaluation card: preference selector, verdict, score, zone table
+// Renders the fit evaluation card: verdict, recommendation, size pills, preference selector, zone table
 function updateFitResultUI() {
   const container = document.getElementById('fit-result-area');
   if (!container) return;
 
-  const activeWorn = state.wornItems[state.wornItems.length - 1];
+  const activeWorn = state.wornItems[0];
   if (!activeWorn) {
     container.hidden = true;
     return;
@@ -2211,9 +2180,8 @@ function updateFitResultUI() {
   }
 
   const score = Math.max(0, Math.round(evalRes.score));
-  const scoreClass = score >= 80 ? '' : score >= 50 ? 'mediocre' : 'poor';
 
-  // Phase 9D: Compute honest verdict badge and plain-language recommendation text
+  // Compute honest verdict badge and plain-language recommendation text
   const { verdictLabel, verdictClass, recommendationText } = getFitVerdictAndRecommendation(
     activeWorn.size, garment, evalRes, rec, currentPref
   );
@@ -2235,6 +2203,8 @@ function updateFitResultUI() {
     'n/a': '—'
   };
 
+  const isEstimatedData = isEstimated(garment) || Boolean(state.avatar?.scaleApproximate) || Boolean(evalRes.zones?.some(z => z.confidence === 'low'));
+
   const rows = (evalRes.zones || []).map(z => {
     const isNA = z.status === 'n/a';
     if (isNA) {
@@ -2251,40 +2221,41 @@ function updateFitResultUI() {
           <td><strong>${ZONE_NAMES[z.zone] || z.zone}</strong></td>
           <td></td>
           <td><span class="zone-chip na">${reason}</span></td>
-          <td></td>
         </tr>
       `;
     }
 
     const easeText = typeof z.ease === 'number' ? `${z.ease > 0 ? '+' : ''}${z.ease.toFixed(1)} cm` : '—';
-    const isLowConf = z.confidence === 'low';
-    const confLabel = isLowConf ? 'Low' : 'Normal';
-    const confClass = isLowConf ? 'conf-low' : 'conf-normal';
-    const confExplanation = isLowConf
-      ? 'Estimated size chart and/or measurements estimated from your photo. Measure yourself with a tape for a more reliable result.'
-      : "Based on the garment's size chart and your entered measurements.";
-
-    const confCell = `
-      <span class="conf-badge ${confClass}" tabindex="0" role="button" aria-haspopup="dialog" aria-label="Confidence: ${confLabel}. ${confExplanation}" title="${confExplanation}">
-        ${confLabel}
-        <span class="conf-popover" role="tooltip">${confExplanation}</span>
-      </span>
-    `;
 
     return `
       <tr>
         <td><strong>${ZONE_NAMES[z.zone] || z.zone}</strong></td>
         <td>${easeText}</td>
         <td><span class="zone-chip ${z.status}">${STATUS_TEXT[z.status] || z.status}</span></td>
-        <td class="confidence-cell">${confCell}</td>
       </tr>
     `;
   }).join('');
 
+  // Check if zone table was previously toggled open by the user
+  const wasTableOpen = Boolean(container.querySelector('#zone-table-content') && !container.querySelector('#zone-table-content').hidden);
+
   container.innerHTML = `
-    <!-- Fit Preference Control -->
-    <div>
-      <div style="font-size:0.6875rem;font-weight:600;color:var(--ink-muted);margin-bottom:4px;text-transform:uppercase">Fit Preference</div>
+    <!-- 1. Garment Name + Verdict Badge -->
+    <div class="fit-summary-header">
+      <div class="fit-verdict-title">${garment.name} (${activeWorn.size})</div>
+      <span class="fit-verdict-badge ${verdictClass}">${verdictLabel}</span>
+    </div>
+
+    <!-- 2. Recommendation Sentence -->
+    <div class="fit-verdict-recommendation">${recommendationText}</div>
+    ${rec?.hint ? `<div class="text-xs muted" style="margin-top:4px">💡 ${rec.hint}</div>` : ''}
+
+    <!-- 3. Size Pills (moved from stage into left panel) -->
+    <div id="size-pills" class="size-pills-container"></div>
+
+    <!-- 4. Fit Preference Control -->
+    <div style="margin-top:12px">
+      <div style="font-size:0.6875rem;font-weight:600;color:var(--ink-muted);margin-bottom:6px;text-transform:uppercase">Fit Preference</div>
       <div class="fit-pref-selector" id="fit-pref-selector">
         <button type="button" class="fit-pref-btn ${currentPref === 'fitted' ? 'is-active' : ''}" data-pref="fitted">Fitted</button>
         <button type="button" class="fit-pref-btn ${currentPref === 'regular' ? 'is-active' : ''}" data-pref="regular">Regular</button>
@@ -2293,38 +2264,32 @@ function updateFitResultUI() {
       </div>
     </div>
 
-    <!-- Summary: Verdict Badge & Recommendation (Phase 9D) -->
-    <div class="fit-summary-header">
-      <div class="fit-verdict-title">${garment.name} (${activeWorn.size})</div>
-      <span class="fit-verdict-badge ${verdictClass}">${verdictLabel}</span>
-    </div>
-    <div class="fit-verdict-recommendation">${recommendationText}</div>
-    ${rec.hint ? `<div class="text-xs muted" style="margin-top:4px">💡 ${rec.hint}</div>` : ''}
-
-    <!-- Zone Table -->
-    <div class="zone-table-wrap">
+    <!-- 5. Zone Table (collapsed by default) -->
+    <div class="zone-table-wrap" style="margin-top:12px">
       <div class="zone-table-toggle" id="zone-table-toggle">
         <span>Zone Breakdown (${activeWorn.size}) · <small style="font-weight:600;opacity:0.8">${score}/100</small></span>
-        <span>▼</span>
+        <span>${wasTableOpen ? '▼' : '▶'}</span>
       </div>
-      <div id="zone-table-content">
+      <div id="zone-table-content" ${wasTableOpen ? '' : 'hidden'}>
         <table class="zone-table">
           <thead>
             <tr>
               <th>Zone</th>
               <th>Ease</th>
               <th>Status</th>
-              <th>Confidence</th>
             </tr>
           </thead>
           <tbody>
             ${rows}
           </tbody>
         </table>
-        <div class="zone-table-note">Confidence shows how reliable the input data is, not how well the item fits.</div>
+        ${isEstimatedData ? '<div class="zone-table-note">Estimated size chart and/or measurements. Measure yourself with a tape for a more reliable result.</div>' : ''}
       </div>
     </div>
   `;
+
+  // Populate size pills into #size-pills
+  updateSizePills();
 
   // Attach preference button handlers
   container.querySelectorAll('.fit-pref-btn').forEach(btn => {
@@ -2339,7 +2304,6 @@ function updateFitResultUI() {
           activeWorn.size = newRec.bestSize;
         }
       } catch (_) {}
-      updateSizePills();
       updateFitResultUI();
       renderStage();
     };
@@ -2352,7 +2316,8 @@ function updateFitResultUI() {
     toggleBtn.onclick = () => {
       const isHidden = tableContent.hidden;
       tableContent.hidden = !isHidden;
-      toggleBtn.querySelector('span:last-child').textContent = isHidden ? '▼' : '▲';
+      const arrowSpan = toggleBtn.querySelector('span:last-child');
+      if (arrowSpan) arrowSpan.textContent = isHidden ? '▼' : '▶';
     };
   }
 }
@@ -2527,13 +2492,16 @@ function computeRefPoseTemplateFitData(item, avatar, ratio, mapPoint, centerShif
       // even on the mannequin itself.
       if (sZone && typeof sZone.ease === 'number') {
         const extra = (sZone.status === 'good' || sZone.status === 'n/a') ? 0 : (computeVisualEase(sZone) - sZone.ease);
-        let refEase = 0;
-        try {
-          const refBody = DEFAULT_MEASUREMENTS[garment.gender === 'male' ? 'male' : 'female'];
-          const refEval = evaluateSize(refBody, garment, garment.refSize || 'M', pref, state.fitRules);
-          refEase = refEval.zones?.find(z => z.zone === 'sleeve')?.ease ?? 0;
-        } catch (_) {}
-        sleeveVisualEase = Math.max(-FIT_VISUAL.maxLenCm - 6, Math.min(FIT_VISUAL.maxLenCm + 6, (sZone.ease - refEase) + extra));
+        // The user's real arm length in the picture is already handled: the sleeve is mapped from the
+        // mannequin's wrist to the USER'S wrist landmark. So only the garment's own size difference
+        // (selected size vs. the size shown in the AI image) and the mild exaggeration move the cuff.
+        // Browser check: using the typed-in arm length here double-counted it; with a photo-estimated
+        // arm that was too short (52 cm at 165 cm), sleeves hung far past the hands on test avatars.
+        const sizes = garment.sizes || {};
+        const refSleeve = sizes[garment.refSize || 'M']?.sleeve;
+        const curSleeve = sizes[size]?.sleeve;
+        const sizeDiff = (typeof refSleeve === 'number' && typeof curSleeve === 'number') ? (curSleeve - refSleeve) : 0;
+        sleeveVisualEase = Math.max(-FIT_VISUAL.maxLenCm - 6, Math.min(FIT_VISUAL.maxLenCm + 6, sizeDiff + extra));
       }
 
       const lZone = evalRes.zones?.find(z => z.zone === 'length');
@@ -5225,7 +5193,9 @@ function drawTemplateLayeredCompositing(ctx, warpData, avatar, skinMaskCanvas, c
   // Only for open necklines. Browser check: on a closed stand-up collar (puffer jacket) the
   // auto-detected "V point" sat low on the chest and this step cut a V-shaped opening into the
   // closed collar. For closed collars the head/chin redraw (section 3b) is enough.
-  if (l[7] && l[8] && garment?.neckline === 'openV') {
+  // Skip only when the admin explicitly marked the collar as closed (cut-from-worn garments);
+  // older garments without a neckline value (trench lapels, shearling collar) still need it.
+  if (l[7] && l[8] && garment?.neckline !== 'closed') {
     const earL = mapPoint(l[7]);
     const earR = mapPoint(l[8]);
     const mouth = l[9] ? mapPoint(l[9]) : (l[0] ? mapPoint(l[0]) : { x: (earL.x + earR.x) / 2, y: (earL.y + earR.y) / 2 });
@@ -5257,19 +5227,9 @@ function drawTemplateLayeredCompositing(ctx, warpData, avatar, skinMaskCanvas, c
 
     ctx.drawImage(skinMaskCanvas, centerShiftX, centerShiftY, skinMaskCanvas.width * ratio, skinMaskCanvas.height * ratio);
 
-    // Soft inner shadow on the neck just under the collar edge (multiply 25%, blur 0.8 cm)
-    ctx.globalCompositeOperation = 'multiply';
-    if (ctx.filter) {
-      ctx.filter = `blur(${Math.max(4, Math.round(0.8 * canvasPxPerCm))}px)`;
-    }
-    ctx.strokeStyle = 'rgba(0, 0, 0, 0.25)';
-    ctx.lineWidth = Math.max(4, Math.round(0.55 * canvasPxPerCm));
-    ctx.beginPath();
-    ctx.moveTo(N1.x, N1.y);
-    ctx.lineTo(ptV.x, ptV.y);
-    ctx.lineTo(N2.x, N2.y);
-    ctx.stroke();
-
+    // (Removed: a blurred dark stroke along this helper triangle. The triangle is only a clip
+    // region, not the real collar edge, so the stroke showed as a faint grey "V" on the neck and
+    // T-shirt of every avatar. The garment's own contact shadow already darkens the collar edge.)
     ctx.restore();
   }
 

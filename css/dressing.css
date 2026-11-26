@@ -504,22 +504,21 @@
   color: var(--ink-soft);
 }
 
-/* Size Pills Floating Bar on Stage */
+/* Size Pills in Left Panel (Phase 11) */
 .size-pills-container {
-  position: absolute;
-  bottom: 24px;
-  left: 50%;
-  transform: translateX(-50%);
+  position: static;
+  transform: none;
   display: flex;
+  flex-wrap: wrap;
   gap: 8px;
-  background: rgba(255, 255, 255, 0.96);
-  padding: 6px 10px;
-  border-radius: 999px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.04);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 0, 0, 0.08);
-  z-index: 10;
-  transition: opacity 0.15s ease;
+  background: transparent;
+  padding: 4px 0 6px 0;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  border: none;
+  z-index: auto;
+  margin: 10px 0 6px 0;
 }
 
 .size-pill {
@@ -911,17 +910,18 @@
   gap: 12px;
 }
 
-/* Modern Fashion Catalog Cards */
+/* Modern Fashion Catalog Cards (Phase 11) */
 .catalog-card {
   display: flex;
   flex-direction: column;
   background: #FFFFFF;
-  border: 1px solid var(--line);
+  border: 1.5px solid var(--line);
   border-radius: 12px;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   overflow: hidden;
   position: relative;
+  height: 200px;
 }
 
 .catalog-card:hover {
@@ -931,15 +931,15 @@
 }
 
 .catalog-card.is-active {
-  border-color: #0F172A;
-  box-shadow: 0 0 0 2px #0F172A, 0 8px 20px rgba(0, 0, 0, 0.08);
+  border: 2px solid #0F172A !important;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.12);
   background: #FAFAFA;
 }
 
 .catalog-card-media {
   position: relative;
   width: 100%;
-  height: 160px;
+  height: 154px;
   background: #F8FAFC;
   overflow: hidden;
   display: flex;
@@ -958,61 +958,115 @@
   transform: scale(1.03);
 }
 
-.catalog-card-tag {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  font-size: 0.625rem;
-  font-weight: 600;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  background: rgba(255, 255, 255, 0.92);
-  backdrop-filter: blur(8px);
-  color: #475569;
-  padding: 2px 7px;
-  border-radius: 999px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-}
-
-.catalog-card-action {
-  position: absolute;
-  bottom: 8px;
-  right: 8px;
-  font-size: 0.6875rem;
-  font-weight: 500;
-  background: rgba(255, 255, 255, 0.94);
-  backdrop-filter: blur(8px);
-  color: #0F172A;
-  padding: 3px 8px;
-  border-radius: 999px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  opacity: 0.9;
-  transition: all 0.15s ease;
-}
-
-.catalog-card:hover .catalog-card-action {
-  background: #0F172A;
-  color: #FFFFFF;
-  opacity: 1;
-}
-
 .catalog-card-worn-badge {
   position: absolute;
-  bottom: 8px;
+  top: 8px;
   right: 8px;
   font-size: 0.6875rem;
   font-weight: 600;
   background: #0F172A;
   color: #FFFFFF;
-  padding: 3px 9px;
+  padding: 3px 8px;
   border-radius: 999px;
   box-shadow: 0 2px 6px rgba(15, 23, 42, 0.2);
+  letter-spacing: 0.02em;
 }
 
 .catalog-card-meta {
+  padding: 8px 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  text-align: center;
+}
+
+.catalog-card-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink);
+  line-height: 1.3;
+}
+
+/* Stage Toolbar & Fit Labels Switch (Phase 11) */
+.stage-toolbar {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(8px);
+  padding: 5px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--ink-muted);
+  transition: all 0.15s ease;
+}
+.stage-toolbar:hover {
+  background: rgba(255, 255, 255, 0.98);
+  color: var(--ink);
+}
+
+/* Your Model Clean Summary (Phase 11) */
+.model-summary-box {
+  background: var(--paper-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
   padding: 10px 12px;
   display: flex;
   flex-direction: column;
+  gap: 8px;
+}
+
+.model-summary-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.8125rem;
+  color: var(--ink);
+}
+
+.edit-model-link {
+  background: none;
+  border: none;
+  color: #2563EB;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 2px 4px;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.edit-model-link:hover {
+  color: #1D4ED8;
+}
+
+.model-measurements-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+}
+
+.meas-chip {
+  background: #FFFFFF;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 0.6875rem;
+  color: var(--ink-muted);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.meas-chip strong {
+  color: var(--ink);
+  font-weight: 600;
 }
 
 .catalog-card-title {
@@ -1281,7 +1335,7 @@
   opacity: 0.85;
 }
 
-/* Responsive Mobile Layout (<= 768px) */
+/* Responsive Mobile Layout (<= 768px): Stage -> Recommendation -> Catalog */
 @media (max-width: 768px) {
   .dressing-layout {
     height: auto;
@@ -1294,11 +1348,12 @@
     overflow-y: auto;
     height: auto;
     padding: 12px;
-    gap: 12px;
+    gap: 16px;
   }
 
   .dressing-stage {
     grid-row: 1;
+    order: 1;
     min-height: 440px;
   }
 
@@ -1307,8 +1362,15 @@
     max-height: 420px;
   }
 
-  .dressing-catalog {
+  .dressing-sidebar {
     grid-row: 2;
+    order: 2;
+    padding-right: 0;
+  }
+
+  .dressing-catalog {
+    grid-row: 3;
+    order: 3;
   }
 
   .catalog-grid {
@@ -1320,16 +1382,8 @@
   }
 
   .catalog-card {
-    min-width: 180px;
+    min-width: 170px;
+    width: 170px;
     flex-shrink: 0;
   }
-
-  .dressing-sidebar {
-    grid-row: 3;
-    padding-right: 0;
-  }
 }
-
-/* The fit-map legend sits where the stage caption is: hide the caption while the legend is shown
-   (browser check: the two lines of text were drawn on top of each other). */
-.fit-map-legend:not([hidden]) + .stage-caption { display: none; }

@@ -29,9 +29,6 @@
         </svg>
         FitCheck Studio
       </a>
-      <div class="topbar-status">
-        <span class="status-badge"><span class="status-badge-dot"></span> 2D Virtual Fitting Room</span>
-      </div>
     </header>
 
     <div class="dressing-body">
@@ -46,8 +43,7 @@
               <svg class="empty-rack-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
                 <path d="M16 11V7a4 4 0 0 0-8 0v4M5 9h14l1 12H4L5 9z"/>
               </svg>
-              <span class="empty-rack-title">No garments on rack</span>
-              <span class="text-xs muted">Click items from the collection to try them on</span>
+              <span class="empty-rack-title">Pick an item from the wardrobe</span>
             </div>
           </div>
           <div id="fit-result-area" class="fit-result-area" hidden>
@@ -171,29 +167,18 @@
 
             <!-- STATE 5: Ready (avatar active, summary) -->
             <div id="flow-ready" class="flow-state" hidden>
-              <div class="model-status-header">
-                <span class="status-dot"></span>
-                <span>Model Active &amp; Calibrated</span>
-              </div>
-              <div class="readout-box" id="avatar-readout-box">
-                <div class="stat-cell">
-                  <span class="stat-val" id="readout-height">--</span>
-                  <span class="stat-lbl">Height</span>
+              <div class="model-summary-box">
+                <div class="model-summary-row">
+                  <span class="model-stat-item" id="summary-height">Height: <strong>--</strong></span>
+                  <button type="button" class="btn-link edit-model-link" id="edit-measurements-btn">Edit</button>
                 </div>
-                <div class="stat-cell">
-                  <span class="stat-val" id="readout-scale">--</span>
-                  <span class="stat-lbl">Scale</span>
-                </div>
-                <div class="stat-cell">
-                  <span class="stat-val" id="readout-shoulder">--</span>
-                  <span class="stat-lbl">Shoulder</span>
+                <div class="model-measurements-grid" id="readout-measurements">
+                  <!-- Rendered dynamically by JS: Chest, Waist, Hip, Shoulder -->
                 </div>
               </div>
-              <div id="readout-measurements" class="readout-measurements"></div>
-              <div class="avatar-action-row">
-                <button type="button" class="btn btn-ghost" id="edit-measurements-btn">Edit Measurements</button>
-                <button type="button" class="btn btn-ghost" id="new-photo-btn">New Photo</button>
-                <button type="button" class="btn btn-ghost" id="delete-avatar-btn">Delete Avatar</button>
+              <div class="avatar-action-row" style="margin-top:10px">
+                <button type="button" class="btn btn-ghost" id="new-photo-btn" style="font-size:0.75rem">New Photo</button>
+                <button type="button" class="btn btn-ghost" id="delete-avatar-btn" style="font-size:0.75rem;color:var(--ink-muted)">Delete</button>
               </div>
             </div>
 
@@ -233,44 +218,22 @@
       <!-- Center Column: Avatar Stage Backdrop & Canvas -->
       <main class="dressing-stage stage" aria-label="Fitting Stage">
         <div class="stage-figure">
-          <div class="stage-toolbar" id="stage-toolbar" style="position:absolute; top:16px; right:16px; display:flex; align-items:center; gap:12px; background:rgba(255,255,255,0.92); backdrop-filter:blur(8px); padding:6px 14px; border-radius:999px; box-shadow:0 4px 14px rgba(0,0,0,0.08); font-size:0.75rem; font-weight:600; color:var(--ink-dark); z-index:10;">
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; margin:0;">
-              <input type="checkbox" id="realistic-compositing-toggle" checked style="cursor:pointer; accent-color:var(--accent);">
-              <span>Realistic compositing</span>
-            </label>
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; margin:0;">
+          <div class="stage-toolbar" id="stage-toolbar">
+            <label class="fit-labels-switch" style="display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; margin:0;">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" style="opacity:0.75"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="18" r="2"/></svg>
               <input type="checkbox" id="fit-labels-toggle" checked style="cursor:pointer; accent-color:var(--accent);">
               <span>Fit labels</span>
-            </label>
-            <label style="display:flex; align-items:center; gap:6px; cursor:pointer; user-select:none; margin:0;">
-              <input type="checkbox" id="fit-map-toggle" style="cursor:pointer; accent-color:var(--accent);">
-              <span>Fit map</span>
             </label>
           </div>
           <canvas id="avatar-canvas" aria-label="Digital Dressing Room"></canvas>
           <div id="fit-map-tooltip" class="fit-map-tooltip" hidden></div>
-          <div id="size-pills" class="size-pills-container" hidden>
-            <button type="button" class="size-pill" data-size="S">S</button>
-            <button type="button" class="size-pill" data-size="M">M</button>
-            <button type="button" class="size-pill" data-size="L">L</button>
-            <button type="button" class="size-pill" data-size="XL">XL</button>
-          </div>
         </div>
-        <div id="fit-map-legend" class="fit-map-legend" hidden>
-          <span class="legend-item"><span class="legend-chip too-tight"></span><span class="legend-icon">↓↓</span> Too tight</span>
-          <span class="legend-item"><span class="legend-chip tight"></span><span class="legend-icon">↓</span> Tight</span>
-          <span class="legend-item"><span class="legend-chip good"></span><span class="legend-icon">✓</span> Good</span>
-          <span class="legend-item"><span class="legend-chip loose"></span><span class="legend-icon">↑</span> Loose</span>
-          <span class="legend-item"><span class="legend-chip too-loose"></span><span class="legend-icon">↑↑</span> Too loose</span>
-        </div>
-        <p class="stage-caption" id="dressing-caption">Interactive Studio Fitting · Real-Time Drape</p>
       </main>
 
       <!-- Right Column: Wardrobe Collection -->
       <section class="dressing-catalog" aria-label="Wardrobe Collection">
         <div class="catalog-header">
           <h2>Wardrobe Collection</h2>
-          <p class="muted text-sm">Curated pieces available for virtual fitting</p>
         </div>
         <div class="tabs catalog-tabs" role="tablist" style="margin-bottom:12px">
           <button type="button" class="tab is-active" id="cat-tab-outerwear" role="tab" data-category="outerwear" aria-selected="true">Outerwear</button>

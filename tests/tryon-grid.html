@@ -80,8 +80,11 @@
       return new Promise((resolve) => {
         const fitMap = $('#fit-map-toggle')?.checked ? '1' : '0';
         const p = new URLSearchParams({ grid: '1', run, avatar: avatar.image, gender: avatar.gender || 'female',
-          h: avatar.h, chest: avatar.chest, waist: avatar.waist, hip: avatar.hip, shoulder: avatar.shoulder,
-          garments: garmentIds.join(','), size, fitMap });
+          h: avatar.h, garments: garmentIds.join(','), size, fitMap });
+        // Only measurements written in avatars.json are sent; missing ones are estimated from the photo.
+        for (const k of ['chest', 'waist', 'hip', 'shoulder', 'armLength', 'torsoLength']) {
+          if (avatar[k] > 0) p.set(k, avatar[k]);
+        }
         const frame = document.createElement('iframe');
         frame.width = 900; frame.height = 1300;
         const onMsg = (e) => {
