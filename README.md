@@ -1,4 +1,4 @@
-# Virtual Try-On (FitCheck Studio)
+# Virtual Try-On 
 
 A browser-only **2D virtual try-on** for outerwear. A user uploads a full-body photo and gets a
 standard-pose avatar. They try on catalog garments, and the app:
